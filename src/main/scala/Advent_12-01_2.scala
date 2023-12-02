@@ -30,28 +30,20 @@ val wordToChar: Map[String, Char] = Map(
    *
    * @return Vector[Char] of all digits found
    * */
-  def findDigits(item: Array[Char], accumulator: Vector[Char]): Vector[Char] =
-    if item.isEmpty then
-      accumulator
-    else
-      val first = item.head
-      item match {
-        case _ if first.isDigit =>
-          // Array.drop(n) slices to end without knowing length
-          findDigits(item.drop(1), accumulator :+ first)
-        case _ =>
-          // Need to convert CharArray to String for regex matching
-          val digitAsWord = digitPattern.findAllIn(item.mkString)
-          if digitAsWord.isEmpty then
-            findDigits(item.drop(1), accumulator)
-          else
-            // There must be exactly one if we get this far, and the lookup must succeed
-            val word = digitAsWord.toVector.head
-            val digit = wordToChar(word)
+  def findDigits(item: String, accumulator: Vector[Char]): Vector[Char] =
+    item match { // Lower-case "string" is variable, not datatype
+      case string if string.isEmpty => accumulator // Exit condition, string is depleted
+      case string if string(0).isDigit => // Found a literal digit
+        findDigits(item.drop(1), accumulator :+ string(0))
+      case string => // Might or might not be a number word
+        digitPattern.findAllIn(string) match { // Possibly empty match iterator
+          case seq if seq.nonEmpty => // Found a number word
+            val digit = wordToChar(seq.matched) // Matched string in match iterator (if any)
             findDigits(item.drop(1), accumulator :+ digit)
-      }
+          case _ => findDigits(item.drop(1), accumulator) // Found nothing useful
+        }
+    }
   val results = input
-    .map(_.toCharArray) // Convert to CharArray early, since that’s where we spend the most time
     .map(findDigits(_, Vector()))
     .map(e => e.head.asDigit * 10 + e.last.asDigit) // Treat Char as Int
     .sum
