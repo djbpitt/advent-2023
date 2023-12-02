@@ -22,11 +22,11 @@ val blueCountPattern: Regex = "(\\d+) blue".r
 def countColors(in: String): GameData =
   val gameNo = gameNoPattern.findFirstMatchIn(in).get.subgroups.head.toInt
   val reds =
-    (for (m <- redCountPattern.findAllIn(in).matchData; e <- m.subgroups) yield e.toInt).toSet
+    (for (m <- redCountPattern.findAllMatchIn(in)) yield m.group(1)).map(_.toInt).toSet
   val greens =
-    (for (m <- greenCountPattern.findAllIn(in).matchData; e <- m.subgroups) yield e.toInt).toSet
+    (for (m <- greenCountPattern.findAllMatchIn(in)) yield m.group(1)).map(_.toInt).toSet
   val blues =
-    (for (m <- blueCountPattern.findAllIn(in).matchData; e <- m.subgroups) yield e.toInt).toSet
+    (for (m <- blueCountPattern.findAllMatchIn(in)) yield m.group(1)).map(_.toInt).toSet
   GameData(
     game = gameNo,
     red = ColorData(min = reds.min, max = reds.max),
@@ -56,7 +56,6 @@ def main_12_02_2(game_data: Array[GameData]): Int =
   val data_lines = os.read(os.pwd / "src" / "resources" / "12-02_data.txt")
     .split("\n")
   val game_data = data_lines.map(e => countColors(e))
-
   println(s"Part 1: ${main_12_02_1(game_data)}")
   println(s"Part 2: ${main_12_02_2(game_data)}")
 
