@@ -33,13 +33,31 @@ def countColors(in: String): GameData =
     blue = ColorData(min = blues.min, max = blues.max),
     green = ColorData(min = greens.min, max = greens.max)
   )
-@main def main2_1(): Unit =
-  val data_lines = os.read(os.pwd/"src"/"resources"/"12-02_data.txt")
+
+/** Playable game
+ *
+ * Must have no more than 12 red, 14 blue, and 13 green
+ * */
+def main_12_02_1(game_data: Array[GameData]): Int =
+  val playable = game_data.filter(e => e.red.max <= 12 && e.blue.max <= 14 && e.green.max <= 13)
+  playable.map(_.game).sum
+
+/** Power
+ *
+ * Minimum value for each color needed for game is max for that color in that game
+ * Power is product of three values
+ * */
+def main_12_02_2(game_data: Array[GameData]): Int =
+  val powers = game_data.map(e => e.red.max * e.blue.max * e.green.max)
+  powers.sum
+
+@main def main(): Unit =
+  // Setup; both parts use same data
+  val data_lines = os.read(os.pwd / "src" / "resources" / "12-02_data.txt")
     .split("\n")
   val game_data = data_lines.map(e => countColors(e))
-  val playable = game_data.filter(e => e.red.max <= 12 && e.blue.max <= 14 && e.green.max <= 13)
-  println(playable.map(_.game).sum)
 
-
+  println(s"Part 1: ${main_12_02_1(game_data)}")
+  println(s"Part 2: ${main_12_02_2(game_data)}")
 
 
