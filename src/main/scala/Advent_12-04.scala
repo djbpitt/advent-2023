@@ -31,14 +31,20 @@ private def countWins(winners: String, toCheck: String): Int =
   val toCheckSet = toCheck.split("\\s+").toSet
   (winnersSet intersect toCheckSet).size
 
+private def scoreCard(winCount: Int): Int =
+  winCount match {
+    case 0 => 0
+    case e => scala.math.pow(2, e - 1).toInt
+  }
+
+private def main4_1(splitLines: Array[(Int, String, String)]): Unit =
+  val winCounts = splitLines.map(e => countWins(e._2, e._3)) // number of winners as Int
+  val scores = winCounts.map(scoreCard)
+  println(scores.sum)
+
 @main def main4(): Unit =
   // Setup
   val dataLines = os.read(os.pwd / "src" / "resources" / "12-04_data.txt")
     .split("\n")
   val splitLines = dataLines.map(parseLine) // (cardNo: Int, winners: String, toCheck: String)
-  val winCounts = splitLines.map(e => countWins(e._2, e._3)) // number of winners as Int
-  val scores = winCounts map {
-    case 0 => 0
-    case e => scala.math.pow(2, e - 1).toInt
-  }
-  println(scores.sum)
+  main4_1(splitLines)
