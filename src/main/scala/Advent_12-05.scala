@@ -63,8 +63,8 @@ def main5_1(): Unit =
   /* ***
   * Setup
   */
-  val data = os.read(os.pwd / "src" / "resources" / "12-05_data_test.txt")
-  // val data: String = os.read(os.pwd / "src" / "resources" / "12-05_data.txt")
+  // val data = os.read(os.pwd / "src" / "resources" / "12-05_data_test.txt")
+  val data: String = os.read(os.pwd / "src" / "resources" / "12-05_data.txt")
   /* ***
    * Break out vectors of seeds and sections
    * Map sections to partially applied functions that require only seed or other long
@@ -77,7 +77,7 @@ def main5_1(): Unit =
   // https://users.scala-lang.org/t/best-practice-applying-multiple-transformations-using-fold/7262/2
   val composed = sectionFunctions.reduce(_ andThen _)
   val results = seeds.map(composed)
-  println(results)
+  println(results.min)
 
 @main def main5(): Unit =
   main5_1()
