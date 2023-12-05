@@ -59,7 +59,23 @@ private def mapToSection(section: Vector[Mapping])(seed: Long) =
     case _ => seed
   }
 
-def main5_1(): Unit =
+
+/** formPairs
+ *
+ * Split vector of longs into vector of two-item tuples of longs (for part 2)
+ *
+ * @param values seed input as vector of longs
+ * @return seed input formed into pairs to construct ranges
+ */
+private def formPairs(values: Vector[Long]): Vector[(Long, Long)] =
+  val indexed = values.zipWithIndex
+  // odds and evens are reversed because first item is item zero, which is even
+  val odds = indexed.filter((_, index) => index % 2 == 0).map(_._1)
+  val evens = indexed.filter((_, index) => index % 2 == 1).map(_._1)
+  odds.zip(evens)
+
+
+@main def main5(): Unit =
   /* ***
   * Setup
   */
@@ -71,15 +87,23 @@ def main5_1(): Unit =
    * Compose functions into chain by reducing across andThen
    */
   val sectionStrings: Vector[String] = data.split("\n\n").toVector
-  val seeds = parseSeeds(sectionStrings.head)
   val sections = sectionStrings.tail.map(parseSection) // vector of Mapping objects (from, to, length)
   val sectionFunctions = sections.map(mapToSection) // arity-1 functions make for easier composition
   // https://users.scala-lang.org/t/best-practice-applying-multiple-transformations-using-fold/7262/2
   val composed = sectionFunctions.reduce(_ andThen _)
-  val results = seeds.map(composed)
-  println(results.min)
+  /* ***
+   * Part 1 uses individual seeds
+   */
+  val seeds = parseSeeds(sectionStrings.head)
+  val results_1 = seeds.map(composed)
+  println(results_1.min)
+  /* ***
+   * Part 2 parses seed input as ranges
+   */
+  val seedRangePairs: Seq[(Long, Long)] = formPairs(seeds)
+  val seedRanges = seedRangePairs.map(e => e._1 until e._1 + e._2)
+  val results_2 = seedRanges.flatMap(_.map(composed))
+  println(results_2.min)
 
-@main def main5(): Unit =
-  main5_1()
 
 case class Mapping(destinationStart: Long, sourceStart: Long, length: Long)
