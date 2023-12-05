@@ -4,7 +4,8 @@ import scala.util.matching.Regex
 import annotation.tailrec
 
 // Group 1 is card number (not used), 2 is winners, 3 is values to check
-// Some apparent spaces are really tabs, so use \s instead of literal space character
+// Some apparent spaces might be tabs or multiple spaces, so use \s instead
+//   of literal space character
 val linePattern: Regex = """^Card\s+(\d+):\s+(.+)\s+\|\s+(.+)$""".r
 
 /** parseLine()
@@ -15,8 +16,13 @@ val linePattern: Regex = """^Card\s+(\d+):\s+(.+)\s+\|\s+(.+)$""".r
  * @return card number as Int, winners and toCheck as strings
  */
 private def parseLine(dataLine: String): (Int, String, String) =
-  val linePattern(cardNo, winners, toCheck) = dataLine
+  // @unchecked (preceded by colon) suppresses warning about refutable extractor
+  // https://github.com/jnclt/adventofcode2023/blob/main/day04/scratchcards.sc
+  val linePattern(cardNo, winners, toCheck) = dataLine: @unchecked
   (cardNo.toInt, winners, toCheck)
+  // https://scalacenter.github.io/scala-advent-of-code/2023/puzzles/day04
+  //   uses string.split(" ").span(_ != "|") to split at pipe "word"
+  //   (after dropping "Card n:") instead of regex
 
 /** countWins()
  *
@@ -33,22 +39,34 @@ private def countWins(winners: String, toCheck: String): Int =
   (winnersSet intersect toCheckSet).size
 
 private def scoreCard(winCount: Int): Int =
+  // (05.d).toInt = 0, so we don't need a special case for 2^-1
   winCount match {
     case 0 => 0
-    case e => scala.math.pow(2, e - 1).toInt
+    case e => math.pow(2, e - 1).toInt
   }
 
-private def computeMultipliers(winCounts: Vector[Int], cardScores: Vector[Int]): Vector[Int] =
+/** computeMultipliers()
+ *
+ * Recursively build vector of multiplier values for all cards
+ *
+ * @param winCounts vector of number of winners for all cards
+ * @return vector of multipliers for all cards
+ */
+private def computeMultipliers(winCounts: Vector[Int]): Vector[Int] =
   @tailrec
   def computeMultiplierStep(offset: Int, cardReps: Vector[Int]): Vector[Int] =
-//    if offset == winCounts.size then cardReps
     if offset == winCounts.size then cardReps
     else
-      val winnersAtOffset: Int = winCounts(offset) // Determines how many games to augment
-      // If Card at position 0 has 4 winners, hit positions 1 through 5 = 0 + 1 through (exclusive) 0 + 4 + 1
+      val winnersAtOffset: Int = winCounts(offset) // Number of following cards to augment
+      // e.g., if Card at position 0 has 4 winners, hit positions 1 through 5 = 0 + 1 through (exclusive) 0 + 4 + 1
       val countsToAugment: Vector[Int] = cardReps.slice(offset + 1, offset + winnersAtOffset + 1)
+      // augment by 1 for each time a card repeats, stored in cardReps vector
       val augmentedCounts: Vector[Int] = countsToAugment.map(_ + cardReps(offset))
-      val newCardReps: Vector[Int] = cardReps.take(offset + 1) :++ augmentedCounts :++ cardReps.drop(offset + winnersAtOffset + 1)
+      // stitch together updated cardReps vector; three parts:
+      // 1) Values from start through current are unchanged
+      // 2) Augmented counts replace input values
+      // 3) Values beginning after augmented counts until end
+      val newCardReps: Vector[Int] = cardReps.take(offset + 1) :++ augmentedCounts :++ cardReps.drop(offset + 1 + winnersAtOffset)
       // println(s"Offset: $offset, Winners: $winnersAtOffset, New reps: $newCardReps")
       computeMultiplierStep(offset + 1, newCardReps)
   val multipliers: Vector[Int] = computeMultiplierStep(offset = 0, cardReps = Vector.fill(winCounts.size)(1))
@@ -58,11 +76,9 @@ private def main4_1(cardScores: Vector[Int]): Unit =
   val result = cardScores.sum
   println(s"Part 1: $result")
 
-private def main4_2(winCounts: Vector[Int], cardScores: Vector[Int]): Unit =
-  val multipliers: Vector[Int] = computeMultipliers(winCounts, cardScores)
-  val result = winCounts.zip(multipliers).zip(cardScores).map(e => (e._1._1, e._1._2, e._2))
-  // Number of winners | Multiplier | Card score
-  val total = result.map(_._2).sum // Asks for count of cards, not scores
+private def main4_2(winCounts: Vector[Int]): Unit =
+  val multipliers: Vector[Int] = computeMultipliers(winCounts)
+  val total = multipliers.sum
   println(s"Part 2: $total")
 
 @main def main4(): Unit =
@@ -74,9 +90,11 @@ private def main4_2(winCounts: Vector[Int], cardScores: Vector[Int]): Unit =
 //               |Card 4: 41 92 73 84 69 | 59 84 76 51 58  5 54 83
 //               |Card 5: 87 83 26 28 32 | 88 30 70 12 93 22 82 36
 //               |Card 6: 31 18 13 56 72 | 74 77 10 23 35 67 36 11""".stripMargin
-  val dataLines = data.split("\n")
+  // idiomatic alternative to data.split("\n")
+  // could, alternatively, use os.read.lines("filename")
+  val dataLines = data.linesIterator
   val splitLines = dataLines.map(parseLine) // (cardNo: Int, winners: String, toCheck: String)
   val winCounts = splitLines.map(e => countWins(e._2, e._3)).toVector // number of winners as Int
   val cardScores = winCounts.map(scoreCard)
   main4_1(cardScores)
-  main4_2(winCounts, cardScores)
+  main4_2(winCounts)
