@@ -102,8 +102,10 @@ private def formPairs(values: Vector[Long]): Vector[(Long, Long)] =
    */
   val seedRangePairs: Seq[(Long, Long)] = formPairs(seeds)
   val seedRanges = seedRangePairs.map(e => e._1 until e._1 + e._2)
-  val results_2 = seedRanges.flatMap(_.map(composed))
-  println(results_2.min)
+  for seedRange <- seedRanges do
+    println(seedRange)
+
+
 
 
 case class Mapping(destinationStart: Long, sourceStart: Long, length: Long)
