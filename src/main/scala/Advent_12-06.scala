@@ -13,14 +13,17 @@ private def computeTimeDistanceMapping(record: Race): Vector[Race] =
       Race(pressTime, runTime * pressTime)
   mappings.filter(e => e.distance > record.distance).toVector
 
+def main6_1(stats: Vector[Race]): Unit =
+  val winnerCounts = stats.map(e => computeTimeDistanceMapping(e).length)
+  val winnerProduct = winnerCounts.product
+  println(s"Part 1: $winnerProduct")
+
 @main def main6(): Unit =
   /* ***
   * Setup
   */
   val stats: Vector[Race] = parseInput("12-06_data.txt")
   // val stats: Vector[Race] = parseInput("12-06_data_test.txt")
-  val winnerCounts = stats.map(e => computeTimeDistanceMapping(e).length)
-  val winnerProduct = winnerCounts.product
-  println(s"Part 1: $winnerProduct")
+  main6_1(stats)
 
 case class Race(time: Int, distance: Int)
