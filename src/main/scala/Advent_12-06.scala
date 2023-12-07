@@ -6,9 +6,11 @@
  * 1. Convert to standard form: ax^2 + bx + c = 0 (with 0 on right side)
  * 2. Quadratic formula: x = (-b ± sqrt(b^2 - 4ac))/2a, then simplify
  * 3. Discriminant (D): b^2 - 4ac:
- *    D > 0 => two real and distinct roots
- *    D = 0 => one real root
- *    D < 0 => two distinct complex roots
+ * D > 0 => two real and distinct roots
+ * D = 0 => one real root
+ * D < 0 => two distinct complex roots
+ *
+ * For binary search: https://www.geeksforgeeks.org/binary-search-in-scala/
  */
 
 import scala.annotation.tailrec
@@ -87,23 +89,45 @@ private def quadratic(race: Race): Long =
   val highPoint = if highRoot == highRounded then highRounded - 1 else highRounded
   highPoint - lowPoint + 1 // add 1 because result is inclusive range
 
+/** Count number of winning values using binary search
+ *
+ * Compute low end, use symmetry to predict high
+ *
+ * @param race Race object supplies total time and distance to beat
+ * @return number of winning times
+ */
+private def binarySearch(race: Race): Double =
 
-private def binarySearch(race: Race) =
-  // y = max * x - x^2
-  val threshold: Long = race.distance
+  /** A match is greater than the target but not by more than 1
+   *
+   * @param value value to test
+   * @param target value must be greater than the target, but not by more than 1
+   * @return true if value is smallest whole number greater than target
+   */
+  def isWithinOne(value: Double, target: Long): Boolean =
+    value.ceil > target && value - 1 <= target
+
+  /** Binary search for value
+   *
+   * @param low bottom of range
+   * @param high top of range
+   * @return double greater than the target, but not by more than 1
+   */
   @tailrec
-  def bisect(x: Long, min: Long, max: Long, oldY: Long): Long =
-    def computeY(x: Long): Long = (max - x) * x
-    val y = computeY(x)
-    y match {
-      case y if (y - oldY) < 1 => Vector((x - 1, computeY(x - 1)), (x, computeY(x)), (x + 1, computeY(x + 1))).filter(_._2 <= threshold).max._1
-      case y if y > race.distance => bisect(x = (x - min) / 2, min = min, max = x, y)
-      case y if y < race.distance => bisect(x = (max - x) / 2, min = x, max = max, y)
-      case _ => x
-    }
-  // Start at mid-x of ascending parabola;
-  val max = race.time
-  bisect(x = race.time / 2, min = 0, max = race.time, oldY = 0)
+  def bisect(low: Double, high: Double): Double =
+    val middle = low + (high - low) / 2
+    val middleDistance = middle * (race.time - middle)
+    if isWithinOne(middleDistance, race.distance)
+      then middle
+    else if middleDistance > race.distance then
+      bisect(middle, high)
+    else if middle < race.distance then
+      bisect(low, middle)
+    else // shouldn’t happen
+      println(s"Error: $middle")
+      new RuntimeException("oops")
+      0
+  bisect(1, race.time)
 
 private def main6_1(): Unit =
   val stats: Vector[Race] = parseInput_1("12-06_data.txt")
@@ -116,16 +140,22 @@ private def main6_2(): Unit =
   val stats: Race = parseInput_2("12-06_data.txt")
   println(stats) // single Race object, with time and target distance to beat
   /*
-   *Brute-force
+   * Brute-force
    * */
   val winnerCounts = computeTimeDistanceMapping(stats).length
   println(s"Part 2 (brute force): $winnerCounts")
   /*
-   *Quadratic equation
-   */
-  val count = quadratic(stats)
-  println(s"Part 2 (quadratic equation): $count")
-
+   * Quadratic equation
+   * */
+  val quadraticCount = quadratic(stats)
+  println(s"Part 2 (quadratic equation): $quadraticCount")
+  /*
+   * Binary search
+   * Symmetrical, so uses low end to compute range
+   * */
+  val lowDouble = binarySearch(stats)
+  val binaryCount = (2 * (stats.time / 2 - lowDouble)).toLong.abs
+  println(s"Part 2 (binary search): $binaryCount")
 @main def main6(): Unit =
   main6_1()
   main6_2()
