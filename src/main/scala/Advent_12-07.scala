@@ -1,6 +1,9 @@
 /** AoC 2023, Day 7
  *
  */
+
+import scala.io.Source
+
 object Cards extends Enumeration {
   type Card = Value
   val C2, C3, C4, C5, C6, C7, C8, C9, CT, CJ, CQ, CK, CA = Value
@@ -39,13 +42,16 @@ def handType(input: Map[Card, Int]): Hand =
     case _ => new RuntimeException("oops"); HighCard
   }
 @main def t(): Unit =
-  val handInput: String = "7AQAQ"
-  val cards: Vector[Card] = handInput.map(cardify).toVector
-  val hand: Map[Card, Int] = handify(cards)
-  println(hand)
-  println(handType(hand))
-  val testHands: Vector[String] = Vector("AA8AA", "23332", "TTT98", "23432", "A23A4", "23456", "32T3K", "T55J5", "KK677", "KTJJT", "QQQJA")
-  val results = testHands.map(_.map(cardify).toVector).map(handify).map(handType)
-  testHands.zip(results).foreach(println)
-  println(results.sorted)
-  println(List(results.max, results.min))
+  val rawData = Source.fromResource("12-07_data_test.txt").mkString("").linesIterator
+  rawData.foreach(println)
+
+//  val handInput: String = "7AQAQ"
+//  val cards: Vector[Card] = handInput.map(cardify).toVector
+//  val hand: Map[Card, Int] = handify(cards)
+//  println(hand)
+//  println(handType(hand))
+//  val testHands: Vector[String] = Vector("AA8AA", "23332", "TTT98", "23432", "A23A4", "23456", "32T3K", "T55J5", "KK677", "KTJJT", "QQQJA")
+//  val results = testHands.map(_.map(cardify).toVector).map(handify).map(handType)
+//  testHands.zip(results).foreach(println)
+//  println(results.sorted)
+//  println(List(results.max, results.min))
