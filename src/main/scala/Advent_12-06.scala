@@ -44,7 +44,6 @@ private def computeTimeDistanceMapping(record: Race): Vector[Race] =
       Race(pressTime, runTime * pressTime)
   mappings.filter(e => e.distance > record.distance).toVector
 
-
 /** Strip spaces to merge fragmented data into single Race
  *
  * @param filename filename in resources director
@@ -57,6 +56,26 @@ private def parseInput_2(filename: String): Race =
     .split("\n")
     .map(_.filter(_.isDigit).toLong) // strip nonDigits and convert remainder to long
   Race(time, distance)
+
+
+private def quadratic(race: Race): Long =
+  /*
+  pressedTime * (totalTime - pressedTime) = distance
+    x * (race.time - x) = y
+      Solve for y > target distance
+        (x * race.time) - x^2 > y
+        Formula: ax^2 + bx + c < 0
+        x^2 - race.time * x + y < 0
+        a = 1, b = -race.time, c = race.distance
+  Forumla for roots:
+    x = (-b ± sqrt(b^2 - 4ac))/2a
+  Symmetrical, so compute only first
+  x = (race.time - sqrt(race.time^2 - 4 * race.distance)/2
+   */
+  val discriminant = math.sqrt(math.pow(race.time, 2) - 4 * race.distance)
+  val lowRoot = (race.time - discriminant) / 2
+  val highRoot = (race.time + discriminant) / 2
+  (highRoot.floor - lowRoot.ceil + 1).toLong
 
 
 private def binarySearch(race: Race) =
@@ -75,7 +94,6 @@ private def binarySearch(race: Race) =
   // Start at mid-x of ascending parabola;
   val max = race.time
   bisect(x = race.time / 2, min = 0, max = race.time, oldY = 0)
-
 
 private def main6_1(): Unit =
   val stats: Vector[Race] = parseInput_1("12-06_data.txt")
@@ -96,7 +114,8 @@ private def main6_2(): Unit =
   val winnerCounts = computeTimeDistanceMapping(stats).length
   println(s"Part 2 (brute force): $winnerCounts")
   // Quadratic equation
-
+  val count = quadratic(stats)
+  println(s"Part 2 (quadratic equation): $count")
 
 @main def main6(): Unit =
   main6_1()
