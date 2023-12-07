@@ -65,27 +65,27 @@ private def parseInput_2(filename: String): Race =
  */
 private def quadratic(race: Race): Long =
   /*
-  Description: pressedTime * (totalTime - pressedTime) = distance
-  Plug in known values: x * (race.time - x) = y
+  Task: pressedTime * (totalTime - pressedTime) = distance, must beat target distance
+  Plug in known values: x * (race.time - x) = race.distance
   Solve for y > target distance
-    (x * race.time) - x^2 > y
+    (x * race.time) - x^2 > race.distance
     As general quadratic formula:
       ax^2 + bx + c < 0
     With known values:
-      x^2 - race.time * x + y < 0
+      x^2 - race.time * x + race.distance < 0
       a = 1, b = -race.time, c = race.distance
-  Formula for discriminant: sqrt(b^2 - 4ac)
+  Formula for discriminant: sqrt(b^2 - 4ac) (distance between roots)
   Formula for roots: x = (-b ± disc)/2a
    */
   val discriminant = math.sqrt(math.pow(race.time, 2) - 4 * race.distance)
   val lowRoot = (race.time - discriminant) / 2
   val highRoot = (race.time + discriminant) / 2
-  // Range between roots, so floor/ceil, except if roots are integers, in which case round up (low) or down (high)
+  // Range between roots, but exclusive, so if roots are integers round up (low) or down (high)
   val lowRounded = lowRoot.ceil.toLong
   val lowPoint = if lowRoot == lowRounded then lowRounded + 1 else lowRounded
   val highRounded = highRoot.floor.toLong
   val highPoint = if highRoot == highRounded then highRounded - 1 else highRounded
-  highPoint - lowPoint + 1
+  highPoint - lowPoint + 1 // add 1 because result is inclusive range
 
 
 private def binarySearch(race: Race) =
