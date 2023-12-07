@@ -58,24 +58,34 @@ private def parseInput_2(filename: String): Race =
   Race(time, distance)
 
 
+/** Compute number of values between quadratic roots
+ *
+ * @param race single race that supplies total time and distance to beat
+ * @return number of values between roots (exclusive)
+ */
 private def quadratic(race: Race): Long =
   /*
-  pressedTime * (totalTime - pressedTime) = distance
-    x * (race.time - x) = y
-      Solve for y > target distance
-        (x * race.time) - x^2 > y
-        Formula: ax^2 + bx + c < 0
-        x^2 - race.time * x + y < 0
-        a = 1, b = -race.time, c = race.distance
-  Forumla for roots:
-    x = (-b ± sqrt(b^2 - 4ac))/2a
-  Symmetrical, so compute only first
-  x = (race.time - sqrt(race.time^2 - 4 * race.distance)/2
+  Description: pressedTime * (totalTime - pressedTime) = distance
+  Plug in known values: x * (race.time - x) = y
+  Solve for y > target distance
+    (x * race.time) - x^2 > y
+    As general quadratic formula:
+      ax^2 + bx + c < 0
+    With known values:
+      x^2 - race.time * x + y < 0
+      a = 1, b = -race.time, c = race.distance
+  Formula for discriminant: sqrt(b^2 - 4ac)
+  Formula for roots: x = (-b ± disc)/2a
    */
   val discriminant = math.sqrt(math.pow(race.time, 2) - 4 * race.distance)
   val lowRoot = (race.time - discriminant) / 2
   val highRoot = (race.time + discriminant) / 2
-  (highRoot.floor - lowRoot.ceil + 1).toLong
+  // Range between roots, so floor/ceil, except if roots are integers, in which case round up (low) or down (high)
+  val lowRounded = lowRoot.ceil.toLong
+  val lowPoint = if lowRoot == lowRounded then lowRounded + 1 else lowRounded
+  val highRounded = highRoot.floor.toLong
+  val highPoint = if highRoot == highRounded then highRounded - 1 else highRounded
+  highPoint - lowPoint + 1
 
 
 private def binarySearch(race: Race) =
@@ -103,17 +113,16 @@ private def main6_1(): Unit =
   println(s"Part 1: $winnerProduct")
 
 private def main6_2(): Unit =
-  /*
-   * Downward parabola of Total * Press - Press^2
-   * Vertex at Press / 2
-   * Values are continuous, so solve for one side and mirror
-   */
   val stats: Race = parseInput_2("12-06_data.txt")
   println(stats) // single Race object, with time and target distance to beat
-  // Brute-force
+  /*
+   *Brute-force
+   * */
   val winnerCounts = computeTimeDistanceMapping(stats).length
   println(s"Part 2 (brute force): $winnerCounts")
-  // Quadratic equation
+  /*
+   *Quadratic equation
+   */
   val count = quadratic(stats)
   println(s"Part 2 (quadratic equation): $count")
 
