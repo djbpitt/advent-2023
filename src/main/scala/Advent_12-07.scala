@@ -49,7 +49,7 @@ def handType(input: Map[Card, Int]): Hand =
     case _ => new RuntimeException("oops"); HighCard
   }
 @main def main7(): Unit =
-  val rawInput: Vector[String] = Source.fromResource("12-07_data_test.txt").getLines.toVector
+  val rawInput: Vector[String] = Source.fromResource("12-07_data.txt").getLines.toVector
   val rawCardInput: Vector[(String, Int)] = rawInput.map(parseHandData)
   val cardsByHand: Vector[Vector[Card]] = rawCardInput.map(e => e._1.map(cardify).toVector)
   val hands: Vector[Map[Card, Int]] = cardsByHand.map(handify)
