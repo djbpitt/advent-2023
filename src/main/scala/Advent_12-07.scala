@@ -9,11 +9,18 @@ object Cards extends Enumeration {
   val C2, C3, C4, C5, C6, C7, C8, C9, CT, CJ, CQ, CK, CA = Value
 }
 import Cards._
+
 object Hands extends Enumeration {
   type Hand = Value
   val HighCard, OnePair, TwoPair, ThreeOfAKind, FullHouse, FourOfAKind, FiveOfAKind = Value
 }
 import Hands._
+
+private def parseHandData(rawHandInput: String): (String, Int) =
+  rawHandInput match {
+    case s"${handString} ${bet}" => (handString, bet.toInt)
+    case _ => (s"ERROR: $rawHandInput", -1)
+  }
 
 /** Convert Char from hand to enum card value
  *
@@ -41,17 +48,21 @@ def handType(input: Map[Card, Int]): Hand =
     case h if counts.max == 5 => HighCard
     case _ => new RuntimeException("oops"); HighCard
   }
-@main def t(): Unit =
-  val rawData = Source.fromResource("12-07_data_test.txt").mkString("").linesIterator
-  rawData.foreach(println)
+@main def main7(): Unit =
+  val rawInput: Vector[String] = Source.fromResource("12-07_data_test.txt").getLines.toVector
+  val rawCardInput: Vector[(String, Int)] = rawInput.map(parseHandData)
+  val cardsByHand: Vector[Vector[Card]] = rawCardInput.map(e => e._1.map(cardify).toVector)
+  val hands: Vector[Map[Card, Int]] = cardsByHand.map(handify)
+  val handTypes: Vector[Hand] = hands.map(handType)
+  val bets = rawCardInput.map((e, f) => f)
+  val cardDataInstances = cardsByHand
+    .zip(handTypes)
+    .zip(bets)
+    .map(e => CardData(e._1._1, e._1._2, e._2))
+  // rank (low to high, one-based) is offset + 1
+  val sortedCardDataInstances: Vector[CardData] = cardDataInstances.sortBy(e => (e.HandType, e.Cards))
+  sortedCardDataInstances.foreach(println)
+  val amountWon = sortedCardDataInstances.zipWithIndex.map((data, rank) => data.Bet * (rank + 1)).sum
+  println(amountWon)
+case class CardData(Cards: Vector[Card], HandType: Hand, Bet: Int)
 
-//  val handInput: String = "7AQAQ"
-//  val cards: Vector[Card] = handInput.map(cardify).toVector
-//  val hand: Map[Card, Int] = handify(cards)
-//  println(hand)
-//  println(handType(hand))
-//  val testHands: Vector[String] = Vector("AA8AA", "23332", "TTT98", "23432", "A23A4", "23456", "32T3K", "T55J5", "KK677", "KTJJT", "QQQJA")
-//  val results = testHands.map(_.map(cardify).toVector).map(handify).map(handType)
-//  testHands.zip(results).foreach(println)
-//  println(results.sorted)
-//  println(List(results.max, results.min))
