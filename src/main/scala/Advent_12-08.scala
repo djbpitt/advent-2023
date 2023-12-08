@@ -17,7 +17,7 @@ private def findZZZ(directions: Vector[Char], pointers: Map[String, Map[Char, St
   @tailrec
   def takeStep(stepNo: Int, stepStart: String, direction: Char): Int =
     val nextStepStart = pointers(stepStart)(direction)
-    if nextStepStart == "ZZZ" || stepNo == 10 then
+    if nextStepStart == "ZZZ" then
       stepNo
     else
       val nextStepNo = stepNo + 1
@@ -26,7 +26,7 @@ private def findZZZ(directions: Vector[Char], pointers: Map[String, Map[Char, St
   takeStep(1, "AAA", directions.head)
 
 @main def main8(): Unit =
-  val rawData = readData("12-08_data_test_2.txt")
+  val rawData = readData("12-08_data.txt")
   val directions: Vector[Char] = rawData.head.toVector // LR …
   val pointerData: Vector[String] = rawData.last
   val pointers = pointerData.map(parsePointer).toMap
