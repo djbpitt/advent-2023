@@ -25,13 +25,16 @@ private def findZZZ(directions: Vector[Char], pointers: Map[String, Map[Char, St
       takeStep(nextStepNo, nextStepStart, nextDirection)
   takeStep(1, "AAA", directions.head)
 
-def main8_1(): Unit =
+def main8_1(directions: Vector[Char], pointers: Map[String, Map[Char, String]]): Unit =
+  val result = findZZZ(directions, pointers)
+  println(result)
+
+def main8_2(): Unit = ???
+
+
+@main def main8(): Unit =
   val rawData = readData("12-08_data.txt")
   val directions: Vector[Char] = rawData.head.toVector // LR …
   val pointerData: Vector[String] = rawData.last
   val pointers = pointerData.map(parsePointer).toMap
-  val result = findZZZ(directions, pointers)
-  println(result)
-
-@main def main8(): Unit =
-  main8_1()
+  main8_1(directions, pointers)
