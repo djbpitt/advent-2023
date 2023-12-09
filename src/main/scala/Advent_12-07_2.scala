@@ -33,8 +33,7 @@ protected case class Hands(i: Int, name: String, promote: Hand)
 
 /** Increase hand type by number of jokers
  *
- * Can’t just increase index because three of a kind promotes to four of a kind, not full house
- * Recursive because two pairs promotes to three of a kind, which then skips full house to go to four of a kind
+ * Can’t just increase index because one pair promotes to three of a kind, and not to two pair
  *
  * @param in    original Hand
  * @param steps number of jokers
@@ -43,11 +42,14 @@ protected case class Hands(i: Int, name: String, promote: Hand)
 def promote(in: Hand, steps: Int): Hand =
   @tailrec
   def promoteStep(hand: Hand, count: Int): Hand = // increase hand type by steps recursively
-    if count == 0 then hand // no more jokers
-    else if hand == ThreeOfAKind then // skip full house
-      promoteStep(FourOfAKind, count - 1)
-    else // next step in order
-      promoteStep(Hands(hand.id + 1), count - 1)
+    (hand, count) match {
+      case (hand, 0) => hand
+      case (FourOfAKind, _) => promoteStep(FiveOfAKind, count - 1)
+      case (ThreeOfAKind, _) => promoteStep(FourOfAKind, count -1)
+      case (TwoPair, _) => promoteStep(FullHouse, count -1)
+      case (OnePair, _) => promoteStep(ThreeOfAKind, count -1)
+      case (HighCard, _) => promoteStep(OnePair, count - 1)
+    }
 
   val promoted: Hand = promoteStep(in: Hand, steps: Int) // launch recursion
   promoted
@@ -78,7 +80,7 @@ private def cardify(input: Char): Card =
  * @return map from card types to counts
  */
 private def handify(input: Vector[Card]): Map[Card, Int] =
-  val grouped = input
+  val grouped: Map[Card, Int] = input
     .groupBy(identity)
     .map((key, value) => key -> value.length)
   grouped
@@ -91,17 +93,16 @@ private def handify(input: Vector[Card]): Map[Card, Int] =
  * @return Hand
  */
 private def handType(input: Map[Card, Int]): Hand =
-  input.values.max match {
-    case 5 => FiveOfAKind
-    case 4 => FourOfAKind
-    case 3 => input.size match {
-      case 2 => FullHouse
-      case _ => ThreeOfAKind
-    }
-    case 2 => input.size match {
-      case 3 => TwoPair
-      case _ => OnePair
-    }
+  val withoutJokers: Map[Card, Int] = input match
+    case e if e.contains(CJ) => e.removed(CJ)
+    case e => e
+  withoutJokers.values.toList.sorted.reverse match {
+    case 5 :: _ => FiveOfAKind
+    case 4 :: _ => FourOfAKind
+    case 3 :: 2 :: _ => FullHouse
+    case 3 :: _ => ThreeOfAKind
+    case 2 :: 2 :: _ => TwoPair
+    case 2 :: _ => OnePair
     case _ => HighCard
   }
 @main def main7(): Unit =
@@ -112,16 +113,15 @@ private def handType(input: Map[Card, Int]): Hand =
   val handTypes: Vector[Hand] = hands.map(handType)
   val handsAndTypes: Vector[(Vector[Card], Hand)] = cardsByHand
     .zip(handTypes)
-  val promotedTypes: Vector[Hand] = handsAndTypes.map {
-    case (_, hand) if hand == FiveOfAKind => FiveOfAKind
-    case (cards, hand) if cards.contains(CJ) =>
-      val jokerCount = cards.groupBy(identity)(CJ).length
-      promote(hand, jokerCount)
-    case (_, hand) => hand
-  }
+  handsAndTypes.foreach(println)
+//  val promotedTypes =
+//    handsAndTypes.map((cards, hand) =>
+//      val
+//    )
   val bets: Vector[Int] = rawCardInput.map((_, f) => f)
   val cardDataInstances = cardsByHand
-    .zip(promotedTypes)
+    // .zip(promotedTypes)
+    .zip(handTypes)
     .zip(bets)
     .map(e => CardData(e._1._1, e._1._2, e._2))
   // rank (low to high, one-based) is offset + 1
