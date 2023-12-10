@@ -43,7 +43,8 @@ def promote(in: Hand, steps: Int): Hand =
   @tailrec
   def promoteStep(hand: Hand, count: Int): Hand = // increase hand type by steps recursively
     (hand, count) match {
-      case (hand, 0) => hand
+      case (hand, 0) => hand // no jokers
+      case (hand, 5) => FiveOfAKind // all jokers
       case (FourOfAKind, _) => promoteStep(FiveOfAKind, count - 1)
       case (ThreeOfAKind, _) => promoteStep(FourOfAKind, count -1)
       case (TwoPair, _) => promoteStep(FullHouse, count -1)
@@ -108,7 +109,7 @@ private def handType(input: Map[Card, Int]): (Hand, Int) =
   }
   (handTypeWithoutJokers, jokerCount)
 @main def main7(): Unit =
-  val rawInput: Vector[String] = Source.fromResource("12-07_data_test.txt").getLines.toVector // :+ "JJJJJ 10000"
+  val rawInput: Vector[String] = Source.fromResource("12-07_data.txt").getLines.toVector // :+ "JJJJJ 10000"
   val rawCardInput: Vector[(String, Int)] = rawInput.map(parseHandData)
   val cardsByHand: Vector[Vector[Card]] = rawCardInput.map(e => e._1.map(cardify).toVector)
   val hands: Vector[Map[Card, Int]] = cardsByHand.map(computeCardCounts)
