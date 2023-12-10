@@ -70,16 +70,12 @@ private def parseHandData(rawHandInput: String): (String, Int) =
 private def cardify(input: Char): Card =
   Cards.withName("C" + input.toString)
 
-/** Map from card type to count of cards of that type
- *
- * Possible improvements:
- * Add joker count of 0 where missing to simplify testing for presence of absence later
- * Rename function (currently "handify") because it returns card counts but not hand type
+/** Map from card types to count of cards of each type
  *
  * @param input Vector[Card] with five cards in hand
  * @return map from card types to counts
  */
-private def handify(input: Vector[Card]): Map[Card, Int] =
+private def computeCardCounts(input: Vector[Card]): Map[Card, Int] =
   val grouped: Map[Card, Int] = input
     .groupBy(identity)
     .map((key, value) => key -> value.length)
@@ -90,13 +86,18 @@ private def handify(input: Vector[Card]): Map[Card, Int] =
  * Does not yet adapt type for jokers
  *
  * @param input Map[Card, Int] with counts of each card type in hand
- * @return Hand
+ * @return tuple of Hand type without jokers and joker count
  */
-private def handType(input: Map[Card, Int]): Hand =
-  val withoutJokers: Map[Card, Int] = input match
+private def handType(input: Map[Card, Int]): (Hand, Int) =
+  val cardCountsWithoutJokers: Map[Card, Int] = input match
     case e if e.contains(CJ) => e.removed(CJ)
     case e => e
-  withoutJokers.values.toList.sorted.reverse match {
+  val jokerCount: Int = 5 - cardCountsWithoutJokers.values.sum
+  val handTypeWithoutJokers = cardCountsWithoutJokers
+    .values
+    .toList
+    .sorted
+    .reverse match {
     case 5 :: _ => FiveOfAKind
     case 4 :: _ => FourOfAKind
     case 3 :: 2 :: _ => FullHouse
@@ -105,32 +106,27 @@ private def handType(input: Map[Card, Int]): Hand =
     case 2 :: _ => OnePair
     case _ => HighCard
   }
+  (handTypeWithoutJokers, jokerCount)
 @main def main7(): Unit =
   val rawInput: Vector[String] = Source.fromResource("12-07_data_test.txt").getLines.toVector // :+ "JJJJJ 10000"
   val rawCardInput: Vector[(String, Int)] = rawInput.map(parseHandData)
   val cardsByHand: Vector[Vector[Card]] = rawCardInput.map(e => e._1.map(cardify).toVector)
-  val hands: Vector[Map[Card, Int]] = cardsByHand.map(handify)
-  val handTypes: Vector[Hand] = hands.map(handType)
-  val handsAndTypes: Vector[(Vector[Card], Hand)] = cardsByHand
-    .zip(handTypes)
-  handsAndTypes.foreach(println)
-//  val promotedTypes =
-//    handsAndTypes.map((cards, hand) =>
-//      val
-//    )
-  val bets: Vector[Int] = rawCardInput.map((_, f) => f)
-  val cardDataInstances = cardsByHand
-    // .zip(promotedTypes)
-    .zip(handTypes)
-    .zip(bets)
-    .map(e => CardData(e._1._1, e._1._2, e._2))
-  // rank (low to high, one-based) is offset + 1
-  val sortedCardDataInstances: Vector[CardData] = cardDataInstances.sortBy(e => (e.HandType, e.Cards))
-  sortedCardDataInstances.foreach(println)
-  val amountWon = sortedCardDataInstances
+  val hands: Vector[Map[Card, Int]] = cardsByHand.map(computeCardCounts)
+  val bets: Vector[Int] = rawCardInput.map(_._2)
+  val handTypeData: Vector[CardData] = hands
+    .map(handType)
+    .map(promote)
+    .zip(cardsByHand).zip(bets)
+    .map(e => (e._1._1, e._1._2, e._2))
+    .map(e => CardData(handType = e._1, cards = e._2, bet=e._3))
+    .sortBy(e => (e.handType, e.cards))
+  handTypeData.foreach(println)
+  val amountWon = handTypeData
     .zipWithIndex
-    .map((data, rank) => data.Bet * (rank + 1)).sum
+    .map((data, rank) => data.bet * (rank + 1))
+    .sum
+  rawCardInput.foreach(println)
   println(s"Part 2: $amountWon")
 
-case class CardData(Cards: Vector[Card], HandType: Hand, Bet: Int)
+case class CardData(handType: Hand, cards: Vector[Card], bet: Int)
 
