@@ -112,7 +112,7 @@ private def findAllCells(
   findNextCell(focus = focus, tracker = Set[Cell](startCell, focus))
 
 @main def main10(): Unit =
-  val rawInput: Vector[String] = Source.fromResource("12-10_data_test_1.txt").getLines.toVector
+  val rawInput: Vector[String] = Source.fromResource("12-10_data.txt").getLines.toVector
   val allCells = rawInput
     .zipWithIndex
     .flatMap(createCellsForRow)
