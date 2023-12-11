@@ -70,7 +70,7 @@ private def buildCellMap(cells: Vector[Cell]): Map[(Int, Int), Option[Cell]] =
 private def findStartNeighbors(startCell: Cell, cellMap: Map[(Int, Int), Option[Cell]]) =
   val result =
     Vector(
-      cellMap.getOrElse((startCell.row + 1, startCell.col),None),
+      cellMap.getOrElse((startCell.row + 1, startCell.col), None),
       cellMap.getOrElse((startCell.row - 1, startCell.col), None),
       cellMap.getOrElse((startCell.row, startCell.col + 1), None),
       cellMap.getOrElse((startCell.row, startCell.col - 1), None)
@@ -78,7 +78,7 @@ private def findStartNeighbors(startCell: Cell, cellMap: Map[(Int, Int), Option[
   println(s"start neighbors = $result")
   result
 
-/** Find next neighboring cell
+/** Find all border cells recursively
  *
  * Assumes border is fully connected with no forking, so:
  * All border cells have two connections that are within the space
@@ -111,7 +111,14 @@ private def findAllCells(
 
   findNextCell(focus = focus, tracker = Set[Cell](startCell, focus))
 
-private def plot_1(steps: Set[Cell], rowCount: Int, rowLength: Int, cellMap: Map[(Int, Int), Option[Cell]]): String =
+/** Print part 1 result as character art
+ *
+ * @param steps     border cells as Set[Cell]
+ * @param rowCount  number of rows as Int
+ * @param rowLength number of cols as Int
+ * @return border plot as character art
+ */
+private def plot_1(steps: Set[Cell], rowCount: Int, rowLength: Int): String =
   /*
     Same width as space and box-drawing characters
     2591 ░ LIGHT SHADE
@@ -119,12 +126,13 @@ private def plot_1(steps: Set[Cell], rowCount: Int, rowLength: Int, cellMap: Map
     2593 ▓ DARK SHADE
   * */
   def plotRow(rowCells: Set[Cell]): String =
-    val rowNo: Int = rowCells.head.row
-    val rowString: String = (0 to rowLength)
-      .map{
-        case e if rowCells.map(_.col).contains(e) => rowCells.filter(_.col == e).head.contents.render
+    val colsToCells: Map[Int, Cell] = rowCells.map(e => e.col -> e).toMap
+    val rowString = (0 to rowLength)
+      .map(e => colsToCells.getOrElse(e, None)
+      match {
+        case e: Cell => e.contents.render
         case _ => " "
-      }.mkString
+      }).mkString
     rowString
   val rows = steps.groupBy(e => e.row)
   (0 to rowCount).map {
@@ -141,12 +149,12 @@ private def plot_1(steps: Set[Cell], rowCount: Int, rowLength: Int, cellMap: Map
   val startCell: Cell = allCells.filter(_.contents.orig == 'S').head
   println(s"start cell = $startCell")
   val startNeighbor = findStartNeighbors(startCell, cellMap).head
-  val path: Set[Cell] = findAllCells(startNeighbor match {case Some(e) => e}, cellMap, startCell)
+  val path: Set[Cell] = findAllCells(startNeighbor match { case Some(e) => e }, cellMap, startCell)
   val steps: Int = (path.size + 1) / 2
   println(s"Part 1: max distance from start is $steps steps")
   val rowCount: Int = rawInput.size
   val rowLength: Int = rawInput.head.length
-  val part1Plot: String = plot_1(path, rowCount, rowLength, cellMap)
+  val part1Plot: String = plot_1(path, rowCount, rowLength)
   println(part1Plot)
 
 
