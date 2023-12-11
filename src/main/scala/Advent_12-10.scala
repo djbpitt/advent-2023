@@ -111,6 +111,27 @@ private def findAllCells(
 
   findNextCell(focus = focus, tracker = Set[Cell](startCell, focus))
 
+private def plot_1(steps: Set[Cell], rowCount: Int, rowLength: Int, cellMap: Map[(Int, Int), Option[Cell]]): String =
+  /*
+    Same width as space and box-drawing characters
+    2591 ░ LIGHT SHADE
+    2592 ▒ MEDIUM SHADE
+    2593 ▓ DARK SHADE
+  * */
+  def plotRow(rowCells: Set[Cell]): String =
+    val rowNo: Int = rowCells.head.row
+    val rowString: String = (0 to rowLength)
+      .map{
+        case e if rowCells.map(_.col).contains(e) => rowCells.filter(_.col == e).head.contents.render
+        case _ => " "
+      }.mkString
+    rowString
+  val rows = steps.groupBy(e => e.row)
+  (0 to rowCount).map {
+    case e if rows.keySet.contains(e) => plotRow(rows(e))
+    case _ => " " * rowLength
+  }.mkString("\n")
+
 @main def main10(): Unit =
   val rawInput: Vector[String] = Source.fromResource("12-10_data.txt").getLines.toVector
   val allCells = rawInput
@@ -123,6 +144,13 @@ private def findAllCells(
   val path: Set[Cell] = findAllCells(startNeighbor match {case Some(e) => e}, cellMap, startCell)
   val steps: Int = (path.size + 1) / 2
   println(s"Part 1: max distance from start is $steps steps")
+  val rowCount: Int = rawInput.size
+  val rowLength: Int = rawInput.head.length
+  val part1Plot: String = plot_1(path, rowCount, rowLength, cellMap)
+  println(part1Plot)
+
+
+
 
 
 //  println(findNeighbors(focus = testCell, lineLength = lineLength, lineCount = lineCount))
