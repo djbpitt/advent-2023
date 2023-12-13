@@ -64,7 +64,7 @@ private def buildCellMap(cells: Vector[Cell]): Map[(Int, Int), Option[Cell]] =
 /** Find neighbors of start cell by brute force
  *
  * Could this be any uglier? Apparently zipping something with an Option creates a nested
- *   Option, which resolves to a nested Some.
+ * Option, which resolves to a nested Some.
  *
  * @param startCell start cell as Cell
  * @param cellMap   Map([row: Int, col: Int), Cell] to look up cells by position in matrix
@@ -155,47 +155,41 @@ private def plot_1(steps: Set[Cell], rowCount: Int, rowLength: Int): String =
  * @param border all border cells as Set[Cell]
  * @return interior cells coordinates as (row: Int, col:Int)
  */
-private def findInterior(border: Set[Cell], rowCount: Int, rowLength: Int): Set[(Int, Int)] =
-  val borderCellsByRow = border
-    .groupBy(_.row)
-    .toSeq
-    .sortBy(_._1)
-    .map(e =>
-      val cols = e._2.map(_.col).toSeq.sorted
-      e._1 -> cols
-    ).toMap
+private def findInterior(border: Set[Cell], rowCount: Int, rowLength: Int): String =
+  val borderCoords: Set[(Int, Int)] = border.map(e => (e.row, e.col))
 
   @tailrec
-  def processRowCell(rowNo: Int, colNo: Int, acc: Set[(Int, Int)]): Set[(Int, Int)] =
-    colNo match {
-      case e if e == rowLength => acc // no more rows, so return
-      case e if !borderCellsByRow.keySet.contains(rowNo) => // empty row, so all cells outside
-        processRowCell(rowNo, colNo + 1, acc)
-      case e => // non-empty row, so count border cells between focus and edge
-        (0 to e)
-          .intersect(borderCellsByRow(rowNo).filter(_ <= e))
-          .size match {
-          case g if g % 2 == 0 => processRowCell(rowNo, colNo + 1, acc) // even, so outside
-          case g => processRowCell(rowNo, colNo + 1, acc + ((rowNo, colNo)))
-        }
-    }
-
-  @tailrec
-  def processRow(rowNo: Int, acc: Set[(Int, Int)]): Set[(Int, Int)] =
-    rowNo match {
-      case e if e == rowCount => acc
+  def processRowCell(rowNo: Int, colNo: Int, cellAcc: Vector[Char], parity: Boolean): String =
+    colNo match
+      case e if e == rowLength => cellAcc.mkString // no more cells in row, exit condition
       case _ =>
-        val cellsFromRow = processRowCell(rowNo = rowNo, colNo = 0, acc = acc)
-        processRow(rowNo + 1, acc union cellsFromRow)
-    }
+        val render: Char = (rowNo, colNo) match
+          case e if borderCoords.contains(e) => // render border cell and adjust parity as needed
+            border
+              .filter(e => e.row == rowNo && e.col == colNo)
+              .head
+              .contents
+              .render
+          case e if parity => '▓' // outer cell
+          case e if !parity => '░' // inner cell
+        val newParity: Boolean = render match
+          case e if "▓░━┏┓".contains(e) => parity
+          case e if "┛┃┗S".contains(e) => !parity // toggle binary value
+          case _ => new RuntimeException("oops"); parity
+        processRowCell(rowNo = rowNo, colNo = colNo + 1, cellAcc = cellAcc :+ render, parity = newParity)
 
-  val borderCoordinates: Set[(Int, Int)] = border
-    .filterNot(e => e.contents.render == '━') // doesn't change parity
-    .map(e => (e.row, e.col))
-  val oddCells = processRow(0, Set[(Int, Int)]())
-    .filterNot(e => borderCoordinates.contains(e))
-  // List(borderCellsByRow, borderCoordinates, oddCells).foreach(println)
-  oddCells
+  @tailrec
+  def processRow(rowNo: Int, rowAcc: Vector[String]): String =
+    rowNo match
+      case e if e == rowCount => rowAcc.mkString("\n")
+      case _ => {
+        val newRowResult = processRowCell(rowNo = rowNo, colNo = 0, cellAcc = Vector.empty, parity = false)
+        processRow(rowNo = rowNo + 1, rowAcc = rowAcc :+ newRowResult)
+      }
+
+  val result = processRow(rowNo = 0, rowAcc = Vector.empty)
+  result
+
 
 @main def main10(): Unit =
   val rawInput: Vector[String] = Source.fromResource("12-10_data.txt").getLines.toVector
@@ -207,15 +201,15 @@ private def findInterior(border: Set[Cell], rowCount: Int, rowLength: Int): Set[
   val startNeighbors = findStartNeighbors(startCell, cellMap) // should always return exact two Cells
   val borderCells: Set[Cell] = findAllCells(startNeighbors.head, cellMap, startCell)
   val steps: Int = (borderCells.size + 1) / 2
-  println(s"Part 1: max distance from start is $steps steps")
   val rowCount: Int = rawInput.size
   val rowLength: Int = rawInput.head.length
   val part1Plot: String = plot_1(borderCells, rowCount, rowLength)
-  println(part1Plot)
-
-//  val interiorCells: Set[(Int, Int)] = findInterior(borderCells, rowCount, rowLength)
-//  println(s"start neighbors: $startNeighbors")
-//  println(interiorCells.toSeq.sorted)
+  //  println(part1Plot)
+  val part2Plot: String = findInterior(borderCells, rowCount, rowLength)
+  val innerCellCount: Int = part2Plot.filter(_ == '▓').size
+  println(part2Plot)
+  println(s"Part 1: max distance from start is $steps steps")
+  println(s"Part 2: nmber of inner cells is $innerCellCount")
 
 /** BorderChar
  *
