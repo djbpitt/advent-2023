@@ -68,20 +68,27 @@ private def buildCellMap(cells: Vector[Cell]): Map[(Int, Int), Option[Cell]] =
  * @return all (both) connected neighbors of start cell as Vector[Cell]
  */
 private def findStartNeighbors(startCell: Cell, cellMap: Map[(Int, Int), Option[Cell]]) =
-  val result =
-    Vector(
-      cellMap.getOrElse((startCell.row + 1, startCell.col), None),
-      cellMap.getOrElse((startCell.row - 1, startCell.col), None),
-      cellMap.getOrElse((startCell.row, startCell.col + 1), None),
-      cellMap.getOrElse((startCell.row, startCell.col - 1), None)
-    ).filter(_.isDefined)
-  println(s"start neighbors = $result")
-  result
+  val neighbors: Vector[Cell] =
+    Vector((startCell.row + 1, startCell.col), // coordinates of neighbors of start, in UDLR order
+      (startCell.row - 1, startCell.col),
+      (startCell.row, startCell.col + 1),
+      (startCell.row, startCell.col - 1))
+      .map(e => cellMap.get(e)) // get() returns Option, just parens will raise error if not found
+      .zip(Vector('U', 'D', 'L', 'R')) // match with values before filtering
+      .filter((e, f) => e.isDefined) // exclude none values in case start cell is on edge
+      .map((e: Option[Option[Cell]], f: Char) => (e.flatten, f)) // remove stupid outer Some() wrapper
+      .map { // remove inner Some() wrapper; guaranteed to match because we filtered out nulls already
+        case (Some(e), f) => (e, f)
+      }
+      .filter((e, f) => e.connectDirections.contains(f)) // does neighbor connect to startCell?
+      .map((e, f) => e) // remove Char
+  neighbors
+
 
 /** Find all border cells recursively
  *
  * Assumes border is fully connected with no forking, so:
- * All border cells have two connections that are within the space
+ * All border cells have two connectDirections that are within the space
  * (no need to check of overflow of space)
  * Choose the one we didn't come in on
  *
@@ -89,14 +96,10 @@ private def findStartNeighbors(startCell: Cell, cellMap: Map[(Int, Int), Option[
  * @param cellMap map from (row,col) to Cell instance
  * @return neighboring cell for next step (filtering out incoming neighbor)
  */
-private def findAllCells(
-                          focus: Cell,
-                          cellMap: Map[(Int, Int), Option[Cell]],
-                          startCell: Cell
-                        ): Set[Cell] =
+private def findAllCells(focus: Cell, cellMap: Map[(Int, Int), Option[Cell]], startCell: Cell): Set[Cell] =
   @tailrec
   def findNextCell(focus: Cell, tracker: Set[Cell]): Set[Cell] =
-    val inDirections = focus.contents.directions
+    val inDirections: String = focus.connectDirections
     val neighbors = inDirections.map {
       case 'U' => cellMap.getOrElse((focus.row - 1, focus.col), None)
       case 'D' => cellMap.getOrElse((focus.row + 1, focus.col), None)
@@ -134,11 +137,62 @@ private def plot_1(steps: Set[Cell], rowCount: Int, rowLength: Int): String =
         case _ => " "
       }).mkString
     rowString
+
   val rows = steps.groupBy(e => e.row)
   (0 to rowCount).map {
     case e if rows.keySet.contains(e) => plotRow(rows(e))
     case _ => " " * rowLength
   }.mkString("\n")
+
+/** Distinguish interior and exterior points
+ *
+ * Unplaced cells are either even (path from cell to edge crosses an
+ * even number of borders cells, including zero) or odd
+ *
+ * @param border all border cells as Set[Cell]
+ * @return interior cells coordinates as (row: Int, col:Int)
+ */
+private def findInterior(border: Set[Cell], rowCount: Int, rowLength: Int): Set[(Int, Int)] =
+  val borderCellsByRow = border
+    .groupBy(_.row)
+    .toSeq
+    .sortBy(_._1)
+    .map(e =>
+      val cols = e._2.map(_.col).toSeq.sorted
+      e._1 -> cols
+    ).toMap
+
+  @tailrec
+  def processRowCell(rowNo: Int, colNo: Int, acc: Set[(Int, Int)]): Set[(Int, Int)] =
+    colNo match {
+      case e if e == rowLength => acc // no more rows, so return
+      case e if !borderCellsByRow.keySet.contains(rowNo) => // empty row, so all cells outside
+        processRowCell(rowNo, colNo + 1, acc)
+      case e => // non-empty row, so count border cells between focus and edge
+        (0 to e)
+          .intersect(borderCellsByRow(rowNo).filter(_ <= e))
+          .size match {
+          case g if g % 2 == 0 => processRowCell(rowNo, colNo + 1, acc) // even, so outside
+          case g => processRowCell(rowNo, colNo + 1, acc + ((rowNo, colNo)))
+        }
+    }
+
+  @tailrec
+  def processRow(rowNo: Int, acc: Set[(Int, Int)]): Set[(Int, Int)] =
+    rowNo match {
+      case e if e == rowCount => acc
+      case _ =>
+        val cellsFromRow = processRowCell(rowNo = rowNo, colNo = 0, acc = acc)
+        processRow(rowNo + 1, acc union cellsFromRow)
+    }
+
+  val borderCoordinates: Set[(Int, Int)] = border
+    .filterNot(e => e.contents.render == '━') // doesn't change parity
+    .map(e => (e.row, e.col))
+  val oddCells = processRow(0, Set[(Int, Int)]())
+    .filterNot(e => borderCoordinates.contains(e))
+  // List(borderCellsByRow, borderCoordinates, oddCells).foreach(println)
+  oddCells
 
 @main def main10(): Unit =
   val rawInput: Vector[String] = Source.fromResource("12-10_data.txt").getLines.toVector
@@ -147,28 +201,27 @@ private def plot_1(steps: Set[Cell], rowCount: Int, rowLength: Int): String =
     .flatMap(createCellsForRow)
   val cellMap: Map[(Int, Int), Option[Cell]] = buildCellMap(allCells)
   val startCell: Cell = allCells.filter(_.contents.orig == 'S').head
-  println(s"start cell = $startCell")
-  val startNeighbor = findStartNeighbors(startCell, cellMap).head
-  val path: Set[Cell] = findAllCells(startNeighbor match { case Some(e) => e }, cellMap, startCell)
-  val steps: Int = (path.size + 1) / 2
+  val startNeighbors = findStartNeighbors(startCell, cellMap) // should always return exact two Cells
+  val borderCells: Set[Cell] = findAllCells(startNeighbors.head, cellMap, startCell)
+  val steps: Int = (borderCells.size + 1) / 2
   println(s"Part 1: max distance from start is $steps steps")
   val rowCount: Int = rawInput.size
   val rowLength: Int = rawInput.head.length
-  val part1Plot: String = plot_1(path, rowCount, rowLength)
+  val part1Plot: String = plot_1(borderCells, rowCount, rowLength)
   println(part1Plot)
 
-
-
-
-
-//  println(findNeighbors(focus = testCell, lineLength = lineLength, lineCount = lineCount))
+//  val interiorCells: Set[(Int, Int)] = findInterior(borderCells, rowCount, rowLength)
+//  println(s"start neighbors: $startNeighbors")
+//  println(interiorCells.toSeq.sorted)
 
 /** BorderChar
  *
  * @param orig       original value as Char (ascii character)
  * @param render     rendering value as Char (Unicode box-drawing character)
- * @param directions two-character string with connected directions
+ * @param directions two-character string with connected directions (UDLF)
  */
 case class BoxChar(orig: Char, render: Char, directions: String)
 
-case class Cell(row: Int, col: Int, contents: BoxChar)
+case class Cell(row: Int, col: Int, contents: BoxChar) {
+  def connectDirections: String = contents.directions
+}
