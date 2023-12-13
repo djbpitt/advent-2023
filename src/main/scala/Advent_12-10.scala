@@ -1,8 +1,6 @@
 package Advent_12_10
 
 import scala.annotation.tailrec
-import scala.collection.mutable
-import scala.collection.mutable.ArrayBuffer
 import scala.io.Source
 
 /** 2023-12-10, Part 1
@@ -49,7 +47,7 @@ private def createBoxChar(char: Char): BoxChar =
  */
 private def createCellsForRow(rowChars: String, rowNo: Int): Vector[Cell] =
   rowChars.zipWithIndex // add column numbers
-    .filter((char, colNo) => "|-JL7FS".contains(char)) // keep only cells that might be part of path
+    .filter((char, _) => "|-JL7FS".contains(char)) // keep only cells that might be part of path
     .map((inputChar, colNo) => Cell(row = rowNo, col = colNo, contents = createBoxChar(inputChar)))
     .toVector
 
@@ -78,13 +76,13 @@ private def findStartNeighbors(startCell: Cell, cellMap: Map[(Int, Int), Option[
       (startCell.row, startCell.col - 1))
       .map(e => cellMap.get(e)) // get() returns Option, just parens will raise error if not found
       .zip(Vector('U', 'D', 'L', 'R')) // match with values before filtering to ensure correct pairings
-      .filter((e, f) => e.isDefined) // exclude None values in case start cell is on edge
+      .filter((e, _) => e.isDefined) // exclude None values in case start cell is on edge
       .map((e: Option[Option[Cell]], f: Char) => (e.flatten, f)) // remove stupid outer Some() wrapper
       .map { // remove inner Some() wrapper; guaranteed to match because we filtered out None values already
-        case (Some(e), f) => (e, f)
+        case (Some(e), f) => (e: @unchecked, f: @unchecked)
       }
       .filter((e, f) => e.connectDirections.contains(f)) // remove neighbors that don't connect to startCell
-      .map((e, f) => e) // remove Char, leaving only Cell
+      .map((e, _) => e) // remove Char, leaving only Cell
   neighbors // should be exactly two
 
 
@@ -112,7 +110,7 @@ private def findAllCells(focus: Cell, cellMap: Map[(Int, Int), Option[Cell]], st
     val result = neighbors.filterNot(e => tracker.contains(e))
     result match {
       case e if e.isEmpty => tracker // exit condition
-      case e => findNextCell(focus = result.head, tracker = tracker + result.head)
+      case _ => findNextCell(focus = result.head, tracker = tracker + result.head)
     }
 
   findNextCell(focus = focus, tracker = Set[Cell](startCell, focus))
@@ -170,8 +168,8 @@ private def findInterior(border: Set[Cell], rowCount: Int, rowLength: Int): Stri
               .head
               .contents
               .render
-          case e if parity => '▓' // outer cell
-          case e if !parity => '░' // inner cell
+          case _ if parity => '▓' // outer cell
+          case _ if !parity => '░' // inner cell
         val newParity: Boolean = render match
           case e if "▓░━┏┓".contains(e) => parity
           case e if "┛┃┗S".contains(e) => !parity // toggle binary value
@@ -182,10 +180,9 @@ private def findInterior(border: Set[Cell], rowCount: Int, rowLength: Int): Stri
   def processRow(rowNo: Int, rowAcc: Vector[String]): String =
     rowNo match
       case e if e == rowCount => rowAcc.mkString("\n")
-      case _ => {
+      case _ =>
         val newRowResult = processRowCell(rowNo = rowNo, colNo = 0, cellAcc = Vector.empty, parity = false)
         processRow(rowNo = rowNo + 1, rowAcc = rowAcc :+ newRowResult)
-      }
 
   val result = processRow(rowNo = 0, rowAcc = Vector.empty)
   result
@@ -206,7 +203,7 @@ private def findInterior(border: Set[Cell], rowCount: Int, rowLength: Int): Stri
   val part1Plot: String = plot_1(borderCells, rowCount, rowLength)
   //  println(part1Plot)
   val part2Plot: String = findInterior(borderCells, rowCount, rowLength)
-  val innerCellCount: Int = part2Plot.filter(_ == '▓').size
+  val innerCellCount: Int = part2Plot.count(_ == '▓')
   println(part2Plot)
   println(s"Part 1: max distance from start is $steps steps")
   println(s"Part 2: nmber of inner cells is $innerCellCount")
