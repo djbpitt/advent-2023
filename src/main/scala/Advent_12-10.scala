@@ -168,8 +168,8 @@ private def findInterior(border: Set[Cell], rowCount: Int, rowLength: Int): Stri
               .head
               .contents
               .render
-          case _ if parity => '▓' // outer cell
-          case _ if !parity => '░' // inner cell
+          case _ if !parity => '▓' // outer cell
+          case _ if parity => '░' // inner cell
         val newParity: Boolean = render match
           case e if "▓░━┏┓".contains(e) => parity
           case e if "┛┃┗S".contains(e) => !parity // toggle binary value
