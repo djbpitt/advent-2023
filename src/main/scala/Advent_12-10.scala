@@ -196,6 +196,8 @@ private def findInterior(border: Set[Cell], rowCount: Int, rowLength: Int): Stri
   val cellMap: Map[(Int, Int), Option[Cell]] = buildCellMap(allCells)
   val startCell: Cell = allCells.filter(_.contents.orig == 'S').head
   val startNeighbors = findStartNeighbors(startCell, cellMap) // should always return exact two Cells
+  println(startNeighbors)
+  println(startCell)
   val borderCells: Set[Cell] = findAllCells(startNeighbors.head, cellMap, startCell)
   val steps: Int = (borderCells.size + 1) / 2
   val rowCount: Int = rawInput.size
@@ -204,7 +206,7 @@ private def findInterior(border: Set[Cell], rowCount: Int, rowLength: Int): Stri
   //  println(part1Plot)
   val part2Plot: String = findInterior(borderCells, rowCount, rowLength)
   val innerCellCount: Int = part2Plot.count(_ == '▓')
-  println(part2Plot)
+  // println(part2Plot)
   println(s"Part 1: max distance from start is $steps steps")
   println(s"Part 2: nmber of inner cells is $innerCellCount")
 
