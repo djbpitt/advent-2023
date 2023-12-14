@@ -87,7 +87,7 @@ private def findAllGalaxyPairs(galaxies: Vector[(Int, Int)]) =
   result
 
 @main def main11(): Unit =
-  val rawInput: Vector[String] = Source.fromResource("12-11_data_test.txt").getLines.toVector
+  val rawInput: Vector[String] = Source.fromResource("12-11_data.txt").getLines.toVector
   val expanded: Vector[Vector[Char]] = expandMatrix(rawInput)
   val galaxies: Vector[(Int, Int)] = findGalaxies(expanded)
   val galaxyPairs: Vector[((Int, Int), (Int, Int))] = findAllGalaxyPairs(galaxies)
