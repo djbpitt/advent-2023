@@ -7,28 +7,35 @@ import scala.io.Source
  *
  * Empty rows and columns are duplicated to expand matrix
  * Change type from Vector[String] to Vector[Vector[Char]] for subsequent processing
+ * TODO: Target character doesn't need to be specified, since the any non-dot must be a galaxy
  *
- * @param in original matrix as Vector[String]
+ * @param in     original matrix as Vector[String]
+ * @param target character whose presence prevents expansion as Char
+ * @param scale  number of copies to make if target not found as Int
  * @return expanded matrix as Vector[Vector[Char]]
  */
-private def expandMatrix(in: Vector[String]): Vector[Vector[Char]] =
+private def expandMatrix(in: Vector[String], target: Char, scale: Int): Vector[Vector[Char]] =
   val result: Vector[Vector[Char]] = in
     .map(_.toVector)
-    .flatMap(e => expandRows(e, '#')) // = map and flatten
+    .flatMap(e => expandRows(e, target, scale)) // = map and flatten
     .transpose
-    .flatMap(e => expandRows(e, '#'))
+    .flatMap(e => expandRows(e, '#', 2))
     .transpose // transpose again so that rows and columns are as in input
   result
 
 /** Duplicate a row if empty, otherwise return unchanged
  *
- * @param in one row as Vector[Char]
+ * See note on expandMatrix about how target can be omitted
+ *
+ * @param in     one row as Vector[Char]
+ * @param target character that signals galaxy and prevents expansion as Char
+ * @param scale  number of times to copy row as Int
  * @return the input plus an additional copy if the row contains no #
  */
-private def expandRows(in: Vector[Char], target: Char): Vector[Vector[Char]] =
+private def expandRows(in: Vector[Char], target: Char, scale: Int): Vector[Vector[Char]] =
   in match
     case e if e.contains(target) => Vector(e)
-    case e => Vector(e, e)
+    case e => Vector.fill(scale)(e)
 
 /** Find all galaxies (# characters) in matrix and return (row, col)
  *
@@ -88,7 +95,7 @@ private def findAllGalaxyPairs(galaxies: Vector[(Int, Int)]) =
 
 @main def main11(): Unit =
   val rawInput: Vector[String] = Source.fromResource("12-11_data.txt").getLines.toVector
-  val expanded: Vector[Vector[Char]] = expandMatrix(rawInput)
+  val expanded: Vector[Vector[Char]] = expandMatrix(rawInput, target = '#', scale = 2)
   val galaxies: Vector[(Int, Int)] = findGalaxies(expanded)
   val galaxyPairs: Vector[((Int, Int), (Int, Int))] = findAllGalaxyPairs(galaxies)
   val distances: Vector[Int] = galaxyPairs.map(e => manhattan(e._1, e._2))
