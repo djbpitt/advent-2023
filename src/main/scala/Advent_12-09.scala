@@ -34,7 +34,7 @@ private def processRow(in: String): (Int, Int) =
   val result2: Int = findResult2(allRows.reverse, prediction = 0)
   (result1, result2)
 
-@main def main12(): Unit =
+@main def main09(): Unit =
   val rawInput: Vector[String] = Source.fromResource("12-09_data.txt").getLines.toVector
   val (results1: Int, results2: Int) = rawInput
     .map(processRow)
