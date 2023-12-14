@@ -14,9 +14,9 @@ import scala.io.Source
 private def expandMatrix(in: Vector[String]): Vector[Vector[Char]] =
   val result: Vector[Vector[Char]] = in
     .map(_.toVector)
-    .flatMap(expandRows) // = map and flatten
+    .flatMap(e => expandRows(e, '#')) // = map and flatten
     .transpose
-    .flatMap(expandRows)
+    .flatMap(e => expandRows(e, '#'))
     .transpose // transpose again so that rows and columns are as in input
   result
 
@@ -25,9 +25,9 @@ private def expandMatrix(in: Vector[String]): Vector[Vector[Char]] =
  * @param in one row as Vector[Char]
  * @return the input plus an additional copy if the row contains no #
  */
-private def expandRows(in: Vector[Char]): Vector[Vector[Char]] =
+private def expandRows(in: Vector[Char], target: Char): Vector[Vector[Char]] =
   in match
-    case e if e.contains('#') => Vector(e)
+    case e if e.contains(target) => Vector(e)
     case e => Vector(e, e)
 
 /** Find all galaxies (# characters) in matrix and return (row, col)
