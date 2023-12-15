@@ -76,11 +76,31 @@ private def manhattan(source: (Int, Int), target: (Int, Int)): Int =
   val horizontal: Int = (source._1 - target._1).abs
   val vertical: Int = (source._2 - target._2).abs
   val result = horizontal + vertical
-  println(s"Distance between $source and $target is $result")
+  // println(s"Distance between $source and $target is $result")
   result
 
-private def expandManhattan(source: (Int, Int), target: (Int, Int)) =
-  val unexpandedManhattan = manhattan(source, target)
+private def expandManhattan(
+                             source: (Int, Int),
+                             target: (Int, Int),
+                             expansionFactor: Int,
+                             dimensions: Vector[Vector[Int]]
+                           ): Long =
+//  /* Private values are all one-dimensional because dimensions are mutually independent */
+//  def sortEndpoints(s: Int, t: Int) = Vector(s, t).sorted // ensure order
+//  def unexpandedDistance(s: Int, t: Int): Int = // Manhattan distance
+//    (t - s)
+//  def nongalaxyItems(s: Int, t: Int, searchSpace: Vector[Int]): Int = // number of non-galaxy items
+//    searchSpace.filter(g => g > s && g < t).size
+//  def oneDimExpandedDistance(s: Int, t: Int, dimension: Vector[Int]): Int =
+//    unexpandedDistance(s, t) + nongalaxyItems(s, t, dimension) * (expansionFactor - 1)
+//
+//
+//  // pair row with row and col with col
+//  println(result)
+
+  ???
+
+
 
 
 /** Find all pairs of galaxies in order to compute pairwise manhattan distances
@@ -119,6 +139,28 @@ private def computeRowsWithGalaxies(matrix: Vector[Vector[Char]], target: Char):
     .map((_, num) => num)
   result
 
+private def findGalaxies2(matrix: Vector[Vector[Char]], target: Char): Vector[Galaxy] =
+  val result = matrix
+    .zipWithIndex // row numbers
+    .flatMap(e => {
+      val rowNo: Int = e._2
+      val indexes: Vector[Int] = findAllIndexes(e._1, target)
+      indexes.map(e => Galaxy(rowNo, e))
+    })
+  result
+
+private def findGalaxyPairs2(galaxies: Vector[Galaxy]): SortedMap[Galaxy, Vector[Galaxy]] =
+  val result = (for {
+    source <- galaxies
+    target <- galaxies
+    // If source row is smaller or (same but source column is smaller)
+    if source.row < target.row || (source.row == target.row && source.col < target.col)
+  } yield (source, target))
+    .groupBy((e, f) => e) // group by source galaxy
+    .to(SortedMap)
+    .map((k, v) => (k, v.map(_._2))) // remove source from targets; already sorted
+  result
+
 @main def main11(): Unit =
   /* Setup */
   val rawInput: Vector[String] = Using(Source.fromResource("12-11_data_test.txt")) {_.getLines.toVector}.get
@@ -129,7 +171,7 @@ private def computeRowsWithGalaxies(matrix: Vector[Vector[Char]], target: Char):
   val expanded1: Vector[Vector[Char]] = expandMatrix(rawInput, scale = 2)
   val galaxies1: Vector[(Int, Int)] = findGalaxies(expanded1, target = galaxyChar)
   val galaxyPairs1 = findAllGalaxyPairs(galaxies1)
-  galaxyPairs1.foreach(println)
+  // galaxyPairs1.foreach(println)
   val distances1 = galaxyPairs1
     .flatMap((e, f) => f.map(g => manhattan(source = e, target = g)))
   val result1 = distances1.sum
@@ -143,10 +185,17 @@ private def computeRowsWithGalaxies(matrix: Vector[Vector[Char]], target: Char):
   val explodedInput: Vector[Vector[Char]] = rawInput.map(_.toVector) // convert to vector of vector of chars
   val rowsWithGalaxies: Vector[Int] = computeRowsWithGalaxies(explodedInput, galaxyChar)// unexpanded
   val colsWithGalaxies: Vector[Int] = computeRowsWithGalaxies(explodedInput.transpose, galaxyChar) // unexpanded
-  println(rowsWithGalaxies); println(colsWithGalaxies)
+  // println(rowsWithGalaxies); println(colsWithGalaxies)
+  val galaxies2: Vector[Galaxy] = findGalaxies2(rawInput.map(_.toVector), galaxyChar)
+  println(galaxies2)
+  val galaxyPairs2: SortedMap[Galaxy, Vector[Galaxy]] = findGalaxyPairs2(galaxies2)
+  galaxyPairs2.foreach(println)
 
-
-
+//https://stackoverflow.com/questions/19345030/easy-idiomatic-way-to-define-ordering-for-a-simple-case-class
+case class Galaxy(row: Int, col: Int) extends Ordered[Galaxy] {
+  import scala.math.Ordered.orderingToOrdered
+  def compare(that: Galaxy): Int = (this.row, this.col) compare (that.row, that.col)
+}
 
 
 
