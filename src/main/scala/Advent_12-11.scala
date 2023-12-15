@@ -105,14 +105,16 @@ private def findAllGalaxyPairs(galaxies: Vector[(Int, Int)]) =
  *
  * @param matrix Input data as vector of vector of chars (transposed when checking columns)
  * @param target Character that represents galaxy ('#')
- * @return Offsets for rows (or cols) that contain galaxies
+ * @return Set of indexes of rows (or cols) that contain galaxies
  */
-private def findRowsWithGalaxies(matrix: Vector[Vector[Char]], target: Char): Vector[Int] =
+private def computeRowsWithGalaxies(matrix: Vector[Vector[Char]], target: Char): Map[Int, Vector[Int]] =
   val result = matrix
     .zipWithIndex
-    .filter((e, _) => e.contains(target))
-    .map((_, f) => f)
+    .map((data, num) => (num, findAllIndexes(data, target).sorted))
+    .filterNot((e, f) => f.isEmpty)
+    .toMap
   result
+
 
 @main def main11(): Unit =
   /* Setup */
@@ -134,11 +136,11 @@ private def findRowsWithGalaxies(matrix: Vector[Vector[Char]], target: Char): Ve
    *
    *  Part 1 strategy (not surprisingly) causes a heap overflow with expansion factor of 1_000_000
    *  */
-  val expansion_factor: Int = 1_000_000 // expansion means adding 999_999 (not 1_000_000) unexpanded rows or cols
+  val expansion_factor: Int = 10 // expansion means adding 999_999 (not 1_000_000) unexpanded rows or cols
   val explodedInput: Vector[Vector[Char]] = rawInput.map(_.toVector) // convert to vector of vector of chars
-  val rowsWithGalaxies: Vector[Int] = findRowsWithGalaxies(explodedInput, galaxyChar) // unexpanded
-  val colsWithGalaxies: Vector[Int] = findRowsWithGalaxies(explodedInput.transpose, galaxyChar) // unexpanded
-
+  val rowsWithGalaxies: Map[Int, Vector[Int]] = computeRowsWithGalaxies(explodedInput, galaxyChar) // unexpanded
+  val colsWithGalaxies: Map[Int, Vector[Int]] = computeRowsWithGalaxies(explodedInput.transpose, galaxyChar) // unexpanded
+  println(rowsWithGalaxies); println(colsWithGalaxies)
 
 
 
