@@ -2,7 +2,7 @@ package Advent_12_11
 
 import scala.annotation.tailrec
 import scala.collection.SortedMap
-import scala.util.{Try, Using}
+import scala.util.Using
 import scala.io.Source
 
 /** Expand rows and columns in matrix
