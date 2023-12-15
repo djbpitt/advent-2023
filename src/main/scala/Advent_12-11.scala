@@ -1,6 +1,7 @@
 package Advent_12_11
 
 import scala.annotation.tailrec
+import scala.collection.SortedMap
 import scala.io.Source
 
 /** Expand rows and columns in matrix
@@ -83,27 +84,32 @@ private def manhattan(source: (Int, Int), target: (Int, Int)): Int =
  * @param galaxies locations of galaxies ('#' characters) as Vector[(row: Int, col: Int)]
  * @return all pairwise combinations of locations except (self, self) as Vector[((Int, Int), (Int, Int))]
  */
-private def findAllGalaxyPairs(galaxies: Vector[(Int, Int)]) =
-  val result: Vector[((Int, Int), (Int, Int))] = (for {
+private def findAllGalaxyPairs(galaxies: Vector[(Int, Int)]): Vector[((Int, Int), (Int, Int))] =
+  val result = for {
     source <- galaxies
     target <- galaxies
-  } yield (source, target))
-    .filter((e, f) => e != f)
+    if source._1 <= target._1 && target != source
+  } yield (source, target)
   result
 
 @main def main11(): Unit =
   val rawInput: Vector[String] = Source.fromResource("12-11_data_test.txt").getLines.toVector
   val expanded1: Vector[Vector[Char]] = expandMatrix(rawInput, scale = 2)
-  println(expanded1.map(_.mkString).mkString("\n"))
   val galaxies1: Vector[(Int, Int)] = findGalaxies(expanded1)
-  println(galaxies1)
-  val galaxyPairs1: Vector[((Int, Int), (Int, Int))] = findAllGalaxyPairs(galaxies1)
-  val distances1: Vector[Int] = galaxyPairs1.map(e => manhattan(e._1, e._2))
-  val result1 = distances1.sum / 2 // Pairs contain (a,b) and (b, a) so divide by 2 to remove mirrors
+  val galaxyPairs1: Map[(Int, Int), Vector[((Int, Int), (Int, Int))]] =
+    findAllGalaxyPairs(galaxies1).groupBy((e, f) => e)
+  val galaxyPairs1sorted: Seq[((Int, Int), Vector[(Int, Int)])] =
+    for {k <- galaxyPairs1.keys.toSeq.sorted} yield
+      k -> galaxyPairs1(k).map(_._2).sorted
+  val galaxyPairsMapping: SortedMap[(Int, Int), Vector[(Int, Int)]] = SortedMap(galaxyPairs1sorted*)
+  galaxyPairsMapping.foreach(println)
+//  val distances1: Vector[Int] = galaxyPairs1.map(e => manhattan(e._1, e._2))
+//  val result1 = distances1.sum
   // Part 2 expands by 1_000_000
   // Currently set for 2; heap overflow with 1_000_000
 
-  println(s"Part 1 solution: $result1")
+//  println(s"Part 1 solution: $result1")
+
 
 
 
