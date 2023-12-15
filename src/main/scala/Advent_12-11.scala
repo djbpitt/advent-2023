@@ -8,6 +8,7 @@ import scala.io.Source
 /** Expand rows and columns in matrix
  *
  * Empty rows and columns are duplicated to expand matrix
+ * Part 1 only
  *
  * @param in     original matrix as Vector[String]
  * @param scale  number of copies to make if target not found as Int
@@ -25,6 +26,7 @@ private def expandMatrix(in: Vector[String], scale: Int): Vector[Vector[Char]] =
 /** Duplicate a row if empty, otherwise return unchanged
  *
  * See note on expandMatrix about how target can be omitted
+ * Part 1 only
  *
  * @param in     one row as Vector[Char]
  * @param scale  number of times to copy row as Int
@@ -94,6 +96,17 @@ private def findAllGalaxyPairs(galaxies: Vector[(Int, Int)]) =
     .map((k, v) => (k, v.map(_._2))) // remove source from targets; already sorted
   result
 
+/** Find all rows (or, if transposed, columns) with galaxies
+ *
+ * Operates on unexpanded, original matrix
+ * Rows or columns without galaxies are expanded; knowing which they are
+ *   saves us from having to expand them, which overflows heap memory
+ * Part 2 only
+ *
+ * @param matrix Input data as vector of vector of chars (transposed when checking columns)
+ * @param target Character that represents galaxy ('#')
+ * @return Offsets for rows (or cols) that contain galaxies
+ */
 private def findRowsWithGalaxies(matrix: Vector[Vector[Char]], target: Char): Vector[Int] =
   val result = matrix
     .zipWithIndex
@@ -121,10 +134,10 @@ private def findRowsWithGalaxies(matrix: Vector[Vector[Char]], target: Char): Ve
    *
    *  Part 1 strategy (not surprisingly) causes a heap overflow with expansion factor of 1_000_000
    *  */
-  val expansion_factor: Int = 1_000_000
-  val explodedInput: Vector[Vector[Char]] = rawInput.map(_.toVector)
-  val rowsWithGalaxies: Vector[Int] = findRowsWithGalaxies(explodedInput, galaxyChar)
-  val colsWithGalaxies: Vector[Int] = findRowsWithGalaxies(explodedInput.transpose, galaxyChar)
+  val expansion_factor: Int = 1_000_000 // expansion means adding 999_999 (not 1_000_000) unexpanded rows or cols
+  val explodedInput: Vector[Vector[Char]] = rawInput.map(_.toVector) // convert to vector of vector of chars
+  val rowsWithGalaxies: Vector[Int] = findRowsWithGalaxies(explodedInput, galaxyChar) // unexpanded
+  val colsWithGalaxies: Vector[Int] = findRowsWithGalaxies(explodedInput.transpose, galaxyChar) // unexpanded
 
 
 
