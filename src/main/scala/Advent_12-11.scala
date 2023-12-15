@@ -94,19 +94,40 @@ private def findAllGalaxyPairs(galaxies: Vector[(Int, Int)]) =
     .map((k, v) => (k, v.map(_._2))) // remove source from targets; already sorted
   result
 
+private def findRowsWithGalaxies(matrix: Vector[Vector[Char]], target: Char): Vector[Int] =
+  val result = matrix
+    .zipWithIndex
+    .filter((e, _) => e.contains(target))
+    .map((_, f) => f)
+  result
+
 @main def main11(): Unit =
+  /* Setup */
   val rawInput: Vector[String] = Using(Source.fromResource("12-11_data_test.txt")) {_.getLines.toVector}.get
+  val galaxyChar: Char = '#'
+  /** ***
+   *  Part 1
+   *  */
   val expanded1: Vector[Vector[Char]] = expandMatrix(rawInput, scale = 2)
-  val galaxies1: Vector[(Int, Int)] = findGalaxies(expanded1, target = '#')
+  val galaxies1: Vector[(Int, Int)] = findGalaxies(expanded1, target = galaxyChar)
   val galaxyPairs1 = findAllGalaxyPairs(galaxies1)
   galaxyPairs1.foreach(println)
   val distances1 = galaxyPairs1
     .flatMap((e, f) => f.map(g => manhattan(source = e, target = g)))
   val result1 = distances1.sum
   println(s"Part 1 solution: $result1")
+  /** ***
+   *  Part 2
+   *
+   *  Part 1 strategy (not surprisingly) causes a heap overflow with expansion factor of 1_000_000
+   *  */
+  val expansion_factor: Int = 1_000_000
+  val explodedInput: Vector[Vector[Char]] = rawInput.map(_.toVector)
+  val rowsWithGalaxies: Vector[Int] = findRowsWithGalaxies(explodedInput, galaxyChar)
+  val colsWithGalaxies: Vector[Int] = findRowsWithGalaxies(explodedInput.transpose, galaxyChar)
 
-// Part 2 expands by 1_000_000
-// Currently set for 2; heap overflow with 1_000_000
+
+
 
 
 
