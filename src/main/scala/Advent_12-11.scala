@@ -96,13 +96,12 @@ private def findAllGalaxyPairs(galaxies: Vector[(Int, Int)]): Vector[((Int, Int)
   val rawInput: Vector[String] = Source.fromResource("12-11_data_test.txt").getLines.toVector
   val expanded1: Vector[Vector[Char]] = expandMatrix(rawInput, scale = 2)
   val galaxies1: Vector[(Int, Int)] = findGalaxies(expanded1)
-  val galaxyPairs1: Map[(Int, Int), Vector[((Int, Int), (Int, Int))]] =
-    findAllGalaxyPairs(galaxies1).groupBy((e, f) => e)
-  val galaxyPairs1sorted: Seq[((Int, Int), Vector[(Int, Int)])] =
-    for {k <- galaxyPairs1.keys.toSeq.sorted} yield
-      k -> galaxyPairs1(k).map(_._2).sorted
-  val galaxyPairsMapping: SortedMap[(Int, Int), Vector[(Int, Int)]] = SortedMap(galaxyPairs1sorted*)
-  galaxyPairsMapping.foreach(println)
+  val galaxyPairs1 =
+    findAllGalaxyPairs(galaxies1)
+      .groupBy((e, f) => e)
+      .to(SortedMap)
+      .map((k, v) => (k, v.map(_._2)))
+  galaxyPairs1.foreach(println)
 //  val distances1: Vector[Int] = galaxyPairs1.map(e => manhattan(e._1, e._2))
 //  val result1 = distances1.sum
   // Part 2 expands by 1_000_000
