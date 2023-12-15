@@ -2,6 +2,7 @@ package Advent_12_11
 
 import scala.annotation.tailrec
 import scala.collection.SortedMap
+import scala.util.{Try, Using}
 import scala.io.Source
 
 /** Expand rows and columns in matrix
@@ -73,6 +74,7 @@ private def manhattan(source: (Int, Int), target: (Int, Int)): Int =
   val horizontal: Int = (source._1 - target._1).abs
   val vertical: Int = (source._2 - target._2).abs
   val result = horizontal + vertical
+  println(s"Distance between $source and $target is $result")
   result
 
 /** Find all pairs of galaxies in order to compute pairwise manhattan distances
@@ -84,7 +86,8 @@ private def findAllGalaxyPairs(galaxies: Vector[(Int, Int)]) =
   val result = (for {
     source <- galaxies
     target <- galaxies
-    if source._1 <= target._1 && target != source
+    // If source row is smaller or (same but source column is smaller)
+    if source._1 < target._1 || (source._1 == target._1 && source._2 < target._2)
   } yield (source, target))
     .groupBy((e, f) => e) // group by source galaxy
     .to(SortedMap) // sort by source
@@ -92,17 +95,19 @@ private def findAllGalaxyPairs(galaxies: Vector[(Int, Int)]) =
   result
 
 @main def main11(): Unit =
-  val rawInput: Vector[String] = Source.fromResource("12-11_data_test.txt").getLines.toVector
+  val rawInput: Vector[String] = Using(Source.fromResource("12-11_data_test.txt")) {_.getLines.toVector}.get
   val expanded1: Vector[Vector[Char]] = expandMatrix(rawInput, scale = 2)
   val galaxies1: Vector[(Int, Int)] = findGalaxies(expanded1, target = '#')
   val galaxyPairs1 = findAllGalaxyPairs(galaxies1)
   galaxyPairs1.foreach(println)
-//  val distances1: Vector[Int] = galaxyPairs1.map(e => manhattan(e._1, e._2))
-//  val result1 = distances1.sum
+  val distances1 = galaxyPairs1
+    .flatMap((e, f) => f.map(g => manhattan(source = e, target = g)))
+  val result1 = distances1.sum
+  println(s"Part 1 solution: $result1")
+
 // Part 2 expands by 1_000_000
 // Currently set for 2; heap overflow with 1_000_000
 
-//  println(s"Part 1 solution: $result1")
 
 
 
