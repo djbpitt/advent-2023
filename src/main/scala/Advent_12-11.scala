@@ -79,6 +79,10 @@ private def manhattan(source: (Int, Int), target: (Int, Int)): Int =
   println(s"Distance between $source and $target is $result")
   result
 
+private def expandManhattan(source: (Int, Int), target: (Int, Int)) =
+  val unexpandedManhattan = manhattan(source, target)
+
+
 /** Find all pairs of galaxies in order to compute pairwise manhattan distances
  *
  * @param galaxies locations of galaxies ('#' characters) as Vector[(row: Int, col: Int)]
@@ -99,22 +103,21 @@ private def findAllGalaxyPairs(galaxies: Vector[(Int, Int)]) =
 /** Find all rows (or, if transposed, columns) with galaxies
  *
  * Operates on unexpanded, original matrix
- * Rows or columns without galaxies are expanded; knowing which they are
+ * Rows or columns without galaxies are later expanded; knowing which they are
  *   saves us from having to expand them, which overflows heap memory
  * Part 2 only
  *
  * @param matrix Input data as vector of vector of chars (transposed when checking columns)
  * @param target Character that represents galaxy ('#')
- * @return Set of indexes of rows (or cols) that contain galaxies
+ * @return Vector of indexes of rows (or cols) that contain galaxies (counts and positions not needed)
  */
-private def computeRowsWithGalaxies(matrix: Vector[Vector[Char]], target: Char): Map[Int, Vector[Int]] =
+private def computeRowsWithGalaxies(matrix: Vector[Vector[Char]], target: Char): Vector[Int] =
   val result = matrix
-    .zipWithIndex
-    .map((data, num) => (num, findAllIndexes(data, target).sorted))
-    .filterNot((e, f) => f.isEmpty)
-    .toMap
+    .zipWithIndex // row (or col, if transposed) number
+    .map((data, num) => (findAllIndexes(data, target).size, num))
+    .filter((dataCount, _) => dataCount != 0)
+    .map((_, num) => num)
   result
-
 
 @main def main11(): Unit =
   /* Setup */
@@ -138,9 +141,10 @@ private def computeRowsWithGalaxies(matrix: Vector[Vector[Char]], target: Char):
    *  */
   val expansion_factor: Int = 10 // expansion means adding 999_999 (not 1_000_000) unexpanded rows or cols
   val explodedInput: Vector[Vector[Char]] = rawInput.map(_.toVector) // convert to vector of vector of chars
-  val rowsWithGalaxies: Map[Int, Vector[Int]] = computeRowsWithGalaxies(explodedInput, galaxyChar) // unexpanded
-  val colsWithGalaxies: Map[Int, Vector[Int]] = computeRowsWithGalaxies(explodedInput.transpose, galaxyChar) // unexpanded
+  val rowsWithGalaxies: Vector[Int] = computeRowsWithGalaxies(explodedInput, galaxyChar)// unexpanded
+  val colsWithGalaxies: Vector[Int] = computeRowsWithGalaxies(explodedInput.transpose, galaxyChar) // unexpanded
   println(rowsWithGalaxies); println(colsWithGalaxies)
+
 
 
 
