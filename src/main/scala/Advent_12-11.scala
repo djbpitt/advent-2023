@@ -7,13 +7,10 @@ import scala.io.Source
 /** Expand rows and columns in matrix
  *
  * Empty rows and columns are duplicated to expand matrix
- * Change type from Vector[String] to Vector[Vector[Char]] for subsequent processing
- * TODO: Target character doesn't need to be specified, since the any non-dot must be a galaxy
  *
  * @param in     original matrix as Vector[String]
- * @param target character whose presence prevents expansion as Char
  * @param scale  number of copies to make if target not found as Int
- * @return expanded matrix as Vector[Vector[Char]]
+ * @return expanded matrix as vector of vector of chars
  */
 private def expandMatrix(in: Vector[String], scale: Int): Vector[Vector[Char]] =
   val result: Vector[Vector[Char]] = in
@@ -29,7 +26,6 @@ private def expandMatrix(in: Vector[String], scale: Int): Vector[Vector[Char]] =
  * See note on expandMatrix about how target can be omitted
  *
  * @param in     one row as Vector[Char]
- * @param target character that signals galaxy and prevents expansion as Char
  * @param scale  number of times to copy row as Int
  * @return the input plus an additional copy if the row contains no #
  */
@@ -41,12 +37,12 @@ private def expandRows(in: Vector[Char], scale: Int): Vector[Vector[Char]] =
  * @param in matrix as Vector[Vector[Char])
  * @return all locations of galaxies as (row: Int, col: Int)
  */
-private def findGalaxies(in: Vector[Vector[Char]]): Vector[(Int, Int)] =
+private def findGalaxies(in: Vector[Vector[Char]], target: Char): Vector[(Int, Int)] =
   val result: Vector[(Int, Int)] = in
     .zipWithIndex
     .flatMap(e => {
       val rowNo: Int = e._2
-      val indexes: Vector[Int] = findAllIndexes(e._1, '#')
+      val indexes: Vector[Int] = findAllIndexes(e._1, target)
       indexes.map(e => (rowNo, e))
     })
   result
@@ -98,7 +94,7 @@ private def findAllGalaxyPairs(galaxies: Vector[(Int, Int)]) =
 @main def main11(): Unit =
   val rawInput: Vector[String] = Source.fromResource("12-11_data_test.txt").getLines.toVector
   val expanded1: Vector[Vector[Char]] = expandMatrix(rawInput, scale = 2)
-  val galaxies1: Vector[(Int, Int)] = findGalaxies(expanded1)
+  val galaxies1: Vector[(Int, Int)] = findGalaxies(expanded1, target = '#')
   val galaxyPairs1 = findAllGalaxyPairs(galaxies1)
   galaxyPairs1.foreach(println)
 //  val distances1: Vector[Int] = galaxyPairs1.map(e => manhattan(e._1, e._2))
