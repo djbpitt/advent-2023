@@ -145,7 +145,7 @@ private def expandManhattan(
   def getUnexpandedDistance(s: Int, t: Int): Int = // Manhattan distance in one dimension
     (t - s).abs
   def getNongalaxyItemCount(s: Int, t: Int, searchSpace: Vector[Int]): Int = // number of non-galaxy items on path
-    searchSpace.count(g => g > s && g < t)
+    searchSpace.count(g => g > List(s, t).min && g < List(s, t).max)
   def getExpandedDistance(s: Int, t: Int, dimension: Vector[Int]): Long =
     val unexpandedDistance: Int = getUnexpandedDistance(s, t)
     val nongalaxySpace: Long = getNongalaxyItemCount(s, t, dimension) * (expansionFactor - 1)
