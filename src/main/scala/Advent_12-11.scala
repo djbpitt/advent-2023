@@ -72,6 +72,7 @@ private def findAllIndexes(in: Vector[Char], target: Char): Vector[Int] =
  * @return Manhattan distance between the two
  */
 private def manhattan(source: (Int, Int), target: (Int, Int)): Int =
+  println(List(source, target))
   val horizontal: Int = (source._1 - target._1).abs
   val vertical: Int = (source._2 - target._2).abs
   val result = horizontal + vertical
@@ -145,7 +146,10 @@ private def expandManhattan(
   def getUnexpandedDistance(s: Int, t: Int): Int = // Manhattan distance in one dimension
     (t - s).abs
   def getNongalaxyItemCount(s: Int, t: Int, searchSpace: Vector[Int]): Int = // number of non-galaxy items on path
-    searchSpace.count(g => g > List(s, t).min && g < List(s, t).max)
+    val potentialGalaxyCount: Int = List(List(s, t).max - List(s, t).min - 1, 0).max
+    val galaxyCount: Int = searchSpace.count(g => g > List(s, t).min && g < List(s, t).max)
+    val nonGalaxyCount: Int = potentialGalaxyCount - galaxyCount
+    nonGalaxyCount
   def getExpandedDistance(s: Int, t: Int, dimension: Vector[Int]): Long =
     val unexpandedDistance: Int = getUnexpandedDistance(s, t)
     val nongalaxySpace: Long = getNongalaxyItemCount(s, t, dimension) * (expansionFactor - 1)
@@ -158,7 +162,7 @@ private def expandManhattan(
 
 @main def main11(): Unit =
   /* Setup */
-  val rawInput: Vector[String] = Using(Source.fromResource("12-11_data_test.txt")) {_.getLines.toVector}.get
+  val rawInput: Vector[String] = Using(Source.fromResource("12-11_data.txt")) {_.getLines.toVector}.get
   val galaxyChar: Char = '#'
   /** Part 1 */
   val expanded1: Vector[Vector[Char]] = expandMatrix(rawInput, scale = 2)
@@ -171,14 +175,13 @@ private def expandManhattan(
   println(s"Part 1 solution: $result1")
   /** Part 2
    *  Part 1 strategy (not surprisingly) causes a heap overflow with expansion factor of 1_000_000 */
-  val expansion_factor: Int = 10 // expansion means adding 999_999 (not 1_000_000) unexpanded rows or cols
+  val expansion_factor: Int = 1_000_000 // expansion means adding 999_999 (not 1_000_000) unexpanded rows or cols
   val explodedInput: Vector[Vector[Char]] = rawInput.map(_.toVector) // convert to vector of vector of chars
   val rowsWithGalaxies: Vector[Int] = findRowsWithGalaxies(explodedInput, galaxyChar)// unexpanded
   val colsWithGalaxies: Vector[Int] = findRowsWithGalaxies(explodedInput.transpose, galaxyChar) // unexpanded
   val searchSpace: Map[String, Vector[Int]] = Map("rows" -> rowsWithGalaxies, "cols" -> colsWithGalaxies)
   val galaxies2: Vector[Galaxy] = findGalaxies2(rawInput.map(_.toVector), galaxyChar)
   val galaxyPairs2: SortedMap[Galaxy, Vector[Galaxy]] = findGalaxyPairs2(galaxies2)
-  galaxyPairs2.foreach(println)
   val galaxiesPaired2 = galaxyPairs2
     .flatMap((s, vt) => vt.map(e => expandManhattan(s, e, expansion_factor, searchSpace)))
   val totalDistance = galaxiesPaired2.sum
