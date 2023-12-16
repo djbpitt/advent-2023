@@ -143,7 +143,7 @@ private def expandManhattan(
                              galaxiesToExpand: Map[String, Vector[Int]] // string is row or column, value is indexes of empties
                            ): Long =
   def getUnexpandedDistance(s: Int, t: Int): Int = // Manhattan distance in one dimension
-    t - s
+    (t - s).abs
   def getNongalaxyItemCount(s: Int, t: Int, searchSpace: Vector[Int]): Int = // number of non-galaxy items on path
     searchSpace.count(g => g > s && g < t)
   def getExpandedDistance(s: Int, t: Int, dimension: Vector[Int]): Long =
