@@ -72,7 +72,6 @@ private def findAllIndexes(in: Vector[Char], target: Char): Vector[Int] =
  * @return Manhattan distance between the two
  */
 private def manhattan(source: (Int, Int), target: (Int, Int)): Int =
-  println(List(source, target))
   val horizontal: Int = (source._1 - target._1).abs
   val vertical: Int = (source._2 - target._2).abs
   val result = horizontal + vertical
@@ -193,8 +192,3 @@ case class Galaxy(row: Int, col: Int) extends Ordered[Galaxy] {
   import scala.math.Ordered.orderingToOrdered
   def compare(that: Galaxy): Int = (this.row, this.col) compare (that.row, that.col)
 }
-
-
-
-
-
