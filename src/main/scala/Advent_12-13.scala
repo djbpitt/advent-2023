@@ -5,6 +5,7 @@ import scala.util.Using
 import scala.io.Source
 import scala.util.matching.Regex
 
+// https://hackernoon.com/manachers-algorithm-explained-longest-palindromic-substring-22cb27a5e96f
 @main def main13(): Unit =
   /* Setup */
   val rawLines = Source.fromResource("12-13_data_test.txt")
