@@ -19,41 +19,27 @@ private def manacher(in: Vector[Char]) =
   // Insert spacers
   val paddingChar: Char = '*'
   val padded: Vector[Char] = in.flatMap(e => Vector(paddingChar, e)) :+ paddingChar
-  println(padded)
   // Initialize result vector
-  // Recursion variables are i = index, c = center, l = left, r = right)
-  val radii: Vector[Int] = Vector.empty // counts out from center, with center not included
-  // Bidirectional scan function goes here
-  def x() = ???
+  val radii = collection.mutable.ArrayBuffer.fill(padded.size)(0) // counts out from center, with center not included
   // Recursive traversal goes here
   // If i > r (new palindrome extends beyond r), i = c and reset l and r
-  // If i <= r and its mirror < l, minimum radii(i) is r - i
+  // If i < r and its mirror < l, minimum radii(i) is r - i
   // If i < r and its mirror >= l, minimum radii(i) is the mirror value (could be longer)
-  def traverse(i:Int, c:Int, l:Int, r:Int): Vector[Int] = ???
-    val mirrorPos = 2 * c - i // mirrored across c; total length is
-  val newRadiusMin =
-    if i < r then
-      List(r - i, radii(mirrorPos))
-
-  // Initialize recursive traversal
-  // Begin traversal
-  traverse(i = 0, c = 0, l = 0, r = 0)
+  for i <- 0 until padded.size do
+    radii(i) = i
+  radii
 
 
 
 // https://hackernoon.com/manachers-algorithm-explained-longest-palindromic-substring-22cb27a5e96f
+// https://github.com/int8/Manacher-Algorithm-in-Scala
 @main def main13(): Unit =
   /* Setup */
   val rawLines = Source.fromResource("12-13_data_test.txt")
     .getLines()
     .mkString("\n")
   val tasks = rawLines.split("\n\n").toVector.map(_.split("\n").map(_.toVector).toVector)
-  println("Original")
-  tasks.head.foreach(println)
-  println("Transposed")
-  tasks.head.transpose.foreach(println)
-  tasks.head.map(manacher)
-
+  tasks.map(_.map(manacher)).foreach(println)
 
 
 
