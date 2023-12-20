@@ -62,39 +62,35 @@ def findAlignment(in: Vector[Vector[Int]]) =
     .filter((radii, _) => radii.head % 2 == 0) // even value means between rows or columns
     .map((_, pos) => pos) // return only the position
 
-@main def main13() =
+def scoreTask(task: Vector[Vector[Char]]): Int =
+  val rowScore =  findAlignment(task.map(manacher)) match {
+    case e if e.isEmpty => 0
+    case e => e.head / 2
+  }
+  val colScore = findAlignment(task.transpose.map(manacher)) match {
+    case e if e.isEmpty => 0
+    case e => e.head / 2
+  }
+  rowScore + 100 * colScore
+
+@main def main13(): Unit =
   /* Read data and separate groups of lines into tasks (vector of vector of chars) */
-  val rawLines = Source.fromResource("12-13_data.txt")
+  val rawLines = Source.fromResource("12-13_data_test.txt")
     .getLines()
     .mkString("\n")
+  /* Map each task to vector of vector of chars, wrap in vector */
   val tasks: Vector[Vector[Vector[Char]]] = rawLines
     .split("\n\n")
     .toVector
     .map(_.split("\n")
       .map(_.toVector)
       .toVector)
-  /* Find the single split point (horizontal or vertical) for each task */
-  // TODO: Move into separate function
-  tasks.map { e =>
-    println("*** New task ***")
-    val rows = e.map(manacher)
-    val rowPos = findAlignment(rows)
-    rowPos.size match
-      case 0 => println("No split between columns")
-      case 1 => println(s"Split between columns at position ${rowPos.head}")
-      case _ =>
-        println(s"Uh oh … more than one possible split between columns: $rowPos")
-        rows.foreach(println)
-    val cols = e.transpose.map(manacher)
-    val colPos = findAlignment(cols)
-    colPos.size match
-      case 0 => println("No split between rows")
-      case 1 => println(s"Split between rows at position ${colPos.head}")
-      case _ =>
-        println(s"Uh oh … more than one possible split between rows: $colPos")
-        cols.foreach(println)
-  }
-
+  /* Total scores for all tasks */
+  val totalScore = tasks.map {e =>
+    val result = scoreTask(e)
+    result
+  }.sum
+  println(s"Part 1 result: $totalScore")
 
 
 
