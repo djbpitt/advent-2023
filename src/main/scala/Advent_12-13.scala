@@ -19,14 +19,26 @@ private def manacher(in: Vector[Char]) =
   // Insert spacers
   val paddingChar: Char = '*'
   val padded: Vector[Char] = in.flatMap(e => Vector(paddingChar, e)) :+ paddingChar
-  // Initialize result vector
+  // Initialize
+  var c: Int = 0
+  var l: Int = 0
+  var r: Int = 0
   val radii = collection.mutable.ArrayBuffer.fill(padded.size)(0) // counts out from center, with center not included
-  // Recursive traversal goes here
   // If i > r (new palindrome extends beyond r), i = c and reset l and r
   // If i < r and its mirror < l, minimum radii(i) is r - i
   // If i < r and its mirror >= l, minimum radii(i) is the mirror value (could be longer)
   for i <- padded.indices do
-    radii(i) = i
+    val mirrorIndex = (2 * c) - i
+    if i < r then radii(i) = List(r - i, radii(mirrorIndex)).min // minimum radius based on mirror
+    var newL = i - (1 + radii(i))
+    var newR = i + (1 + radii(i))
+    while newR < padded.size && newL >= 0 && padded(newL) == padded(newR) do
+      radii(i) += 1
+      newL -= 1
+      newR += 1
+    if i + radii(i) > r then
+      c = i
+      r = i + radii(i)
   radii
 
 
@@ -39,7 +51,8 @@ private def manacher(in: Vector[Char]) =
     .getLines()
     .mkString("\n")
   val tasks = rawLines.split("\n\n").toVector.map(_.split("\n").map(_.toVector).toVector)
-  tasks.map(_.map(manacher)).foreach(println)
+  val results = tasks.map(_.map(manacher))
+  results.head.foreach(println)
 
 
 
