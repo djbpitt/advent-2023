@@ -57,9 +57,10 @@ def findAlignment(in: Vector[Vector[Int]]) =
   in
     .transpose // easier to work with rows
     .zipWithIndex // we care about position, and not the actual value
-    .filter((e, _) => e.forall(_ == e.head)) // early exit, so faster than measuring the size of a (deduplicated) set
-    .filter((e, _) => e.head > 1) // values or 0 or 1 aren't meaningful
-    .map((_, f) => f) // return only the position
+    .filter((radii, _) => radii.forall(_ == radii.head)) // early exit, so faster than measuring the size of a (deduplicated) set
+    .filter((radii, _) => radii.head > 1) // values or 0 or 1 aren't meaningful
+    .filter((radii, _) => radii.head % 2 == 0) // even value means between rows or columns
+    .map((_, pos) => pos) // return only the position
 
 @main def main13() =
   /* Read data and separate groups of lines into tasks (vector of vector of chars) */
