@@ -48,7 +48,6 @@ private def manacher(in: Vector[Char]): Vector[Int] =
  *
  * NB: Centers only valid if between rows or columns, i.e., only a space between rows
  *   or columns, and not a row or column itself, can be the center
- * TODO: Currently not filtering out centers that are rows or columns (not between)
  *
  * @param in vector of vectors of palindrome lengths by position, one inner vector per row or column
  * @return zero or one position of reflection (TODO: currently may return more than one)
@@ -62,14 +61,21 @@ def findAlignment(in: Vector[Vector[Int]]) =
     .filter((radii, _) => radii.head % 2 == 0) // even value means between rows or columns
     .map((_, pos) => pos) // return only the position
 
+/** Compute row or column score for task
+ * 
+ * Compute both; one will be zero
+ * 
+ * @param task matrix as vector of vector of chars
+ * @return int representing (necessarily non-zero) score for that task according to the instructions
+ */
 def scoreTask(task: Vector[Vector[Char]]): Int =
   val rowScore =  findAlignment(task.map(manacher)) match {
-    case e if e.isEmpty => 0
-    case e => e.head / 2
+    case e if e.isEmpty => 0 // no reflection on this dimension
+    case e => e.head / 2 // halve to account for padding
   }
   val colScore = findAlignment(task.transpose.map(manacher)) match {
-    case e if e.isEmpty => 0
-    case e => e.head / 2
+    case e if e.isEmpty => 0 // no reflection on this dimension
+    case e => e.head / 2 // halve to account for padding
   }
   rowScore + 100 * colScore
 
