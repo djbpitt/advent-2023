@@ -25,7 +25,7 @@ private def manacher(in: Vector[Char]) =
   // If i > r (new palindrome extends beyond r), i = c and reset l and r
   // If i < r and its mirror < l, minimum radii(i) is r - i
   // If i < r and its mirror >= l, minimum radii(i) is the mirror value (could be longer)
-  for i <- 0 until padded.size do
+  for i <- padded.indices do
     radii(i) = i
   radii
 
