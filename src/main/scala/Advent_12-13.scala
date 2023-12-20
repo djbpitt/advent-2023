@@ -75,7 +75,7 @@ def scoreTask(task: Vector[Vector[Char]]): Int =
 
 @main def main13(): Unit =
   /* Read data and separate groups of lines into tasks (vector of vector of chars) */
-  val rawLines = Source.fromResource("12-13_data_test.txt")
+  val rawLines = Source.fromResource("12-13_data.txt")
     .getLines()
     .mkString("\n")
   /* Map each task to vector of vector of chars, wrap in vector */
