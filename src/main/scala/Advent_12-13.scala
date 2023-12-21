@@ -9,7 +9,7 @@ import scala.io.Source
  * 3. Find all aligned palindrome centers
  *
  * Returns the lengths of the palindromes at each position. We don't care about the specific length, but we
- *   do care whether all lengths at that position are the same
+ * do care whether all lengths at that position are the same
  *
  * Ported from: https://hackernoon.com/manachers-algorithm-explained-longest-palindromic-substring-22cb27a5e96f
  * See also: https://github.com/int8/Manacher-Algorithm-in-Scala
@@ -47,41 +47,54 @@ private def manacher(in: Vector[Char]): Vector[Int] =
  * Centers of reflection can be identified because all values in the vector are the same
  *
  * NB: Centers only valid if between rows or columns, i.e., only a space between rows
- *   or columns, and not a row or column itself, can be the center
+ * or columns, and not a row or column itself, can be the center
  *
  * @param in vector of vectors of palindrome lengths by position, one inner vector per row or column
  * @return zero or one position of reflection (TODO: currently may return more than one)
  */
-def findAlignment(in: Vector[Vector[Int]]) =
-  in
-    .transpose // easier to work with rows
-    .zipWithIndex // we care about position, and not the actual value
-    .filter((radii, _) => radii.forall(_ == radii.head)) // early exit, so faster than measuring the size of a (deduplicated) set
-    .filter((radii, _) => radii.head > 1) // values or 0 or 1 aren't meaningful
-    .filter((radii, _) => radii.head % 2 == 0) // even value means between rows or columns
-    .map((_, pos) => pos) // return only the position
+def findAlignment1(in: Vector[Vector[Int]]): Vector[Int] = in
+  .transpose // easier to work with rows
+  .zipWithIndex // we care about position, and not the actual value
+  .filter((radii, _) => radii.forall(_ == radii.head)) // early exit, so faster than measuring the size of a (deduplicated) set
+  .filter((radii, _) => radii.head > 1) // values or 0 or 1 aren't meaningful
+  .filter((radii, _) => radii.head % 2 == 0) // even value means between rows or columns
+  .map((_, pos) => pos) // return only the position
 
 /** Compute row or column score for task
- * 
+ *
  * Compute both; one will be zero
- * 
+ *
  * @param task matrix as vector of vector of chars
  * @return int representing (necessarily non-zero) score for that task according to the instructions
  */
-def scoreTask(task: Vector[Vector[Char]]): Int =
-  val rowScore =  findAlignment(task.map(manacher)) match {
+def scoreTask1(task: Vector[Vector[Char]]): Int =
+  val rowScore = findAlignment1(task.map(manacher)) match {
     case e if e.isEmpty => 0 // no reflection on this dimension
     case e => e.head / 2 // halve to account for padding
   }
-  val colScore = findAlignment(task.transpose.map(manacher)) match {
+  val colScore = findAlignment1(task.transpose.map(manacher)) match {
     case e if e.isEmpty => 0 // no reflection on this dimension
     case e => e.head / 2 // halve to account for padding
   }
   rowScore + 100 * colScore
 
+def findAlignment2(in: Vector[Vector[Int]]) =
+  val result = in
+    .transpose
+    .zipWithIndex
+    .filter((_, pos) => pos % 2 == 0)
+    .map((values, pos) => (values.groupBy(identity), pos))
+    .filter((groups, _) => groups.size <= 2)
+    .map((groups, pos) => (groups.map((key, value) => (key, value.size)), pos))
+    .filter((groupings, _) => groupings.values.min == 1)
+    .map((_, pos) => pos / 2) // Count of rows
+  result
+
+def scoreTask2(task: Vector[Vector[Char]]): Int = ???
+
 @main def main13(): Unit =
   /* Read data and separate groups of lines into tasks (vector of vector of chars) */
-  val rawLines = Source.fromResource("12-13_data.txt")
+  val rawLines = Source.fromResource("12-13_data_test.txt")
     .getLines()
     .mkString("\n")
   /* Map each task to vector of vector of chars, wrap in vector */
@@ -91,12 +104,42 @@ def scoreTask(task: Vector[Vector[Char]]): Int =
     .map(_.split("\n")
       .map(_.toVector)
       .toVector)
-  /* Total scores for all tasks */
-  val totalScore = tasks.map {e =>
-    val result = scoreTask(e)
+  /* Part 1: total scores for all tasks */
+  val totalScore = tasks.map { e =>
+    val result = scoreTask1(e)
     result
   }.sum
   println(s"Part 1 result: $totalScore")
+
+  /* Part 2: adjust for smudge and total scores for all tasks */
+  for task <- tasks do
+    println("***New task***")
+    println("Between columns")
+    val counts1 = task.map(manacher)
+    val result1 = counts1
+      .transpose
+      .zipWithIndex
+      .filter((_, pos) => pos % 2 == 0)
+      .map((values, pos) => (values.groupBy(identity), pos))
+      .filter((groups, _) => groups.size <= 2)
+      .map((groups, pos) => (groups.map((key, value) => (key, value.size)), pos))
+      .filter((groupings, _) => groupings.values.min == 1)
+      .map((_, pos) => pos / 2) // Count of rows
+    println("**Groups**")
+    result1.foreach(println)
+    println("Between columns")
+    val counts2 = task.transpose.map(manacher)
+    val result2 = counts2
+      .transpose
+      .zipWithIndex
+      .filter((_, pos) => pos % 2 == 0)
+      .map((values, pos) => (values.groupBy(identity), pos))
+      .filter((groups, _) => groups.size <= 2)
+      .map((groups, pos) => (groups.map((key, value) => (key, value.size)), pos))
+      .filter((groupings, _) => groupings.values.min == 1)
+      .map((_, pos) => pos / 2) // Count of columns
+    println("**Groups**")
+    result2.foreach(println)
 
 
 
